@@ -139,16 +139,16 @@ Objectives = {
     "MainArmy" : {
         "MinSupply": 0,
         "army" : [
-            {"unit" : "SIEGETANK", "amount": 3},
-            {"unit" : "WIDOWMINE", "amount": 2},
-            {"unit" : "RAVEN", "amount": 1},
-            {"unit" : "MARINE", "amount": 15},
-            {"unit" : "GHOST", "amount": 5},
-            {"unit" : "MEDIVAC", "amount": 2},
-            {"unit" : "LIBERATOR", "amount": 2},
-            {"unit" : "BATTLECRUISER", "amount" : 3},
-            {"unit" : "GHOST", "amount": 5},
-            {"unit" : "MARINE", "amount": "fill"}
+            {"unit" : "SIEGETANK", "amount": 3, "source": UnitTypeId.FACTORY},
+            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
+            {"unit" : "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
+            {"unit" : "MARINE", "amount": 15, "source": UnitTypeId.BARRACKS},
+            {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
+            {"unit" : "MEDIVAC", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "LIBERATOR", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
+            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
 
 
         ],
@@ -157,31 +157,31 @@ Objectives = {
     "AntiAir" : {
         "MinSupply": 6,
         "army" : [
-            {"unit": "CYCLONE", "amount": 2},
-            {"unit": "RAVEN", "amount": 1},
-            {"unit": "VIKINGFIGHTER", "amount": "fill"}
+            {"unit": "CYCLONE", "amount": 2, "source": UnitTypeId.FACTORY},
+            {"unit": "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
+            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT},
         ],
         "rebuild" : True
     },
     "ScoutHarass" : {
         "MinSupply": 9,
         "army" : [
-            {"unit": "HELLION", "amount": "2"},
-            {"unit": "REAPER", "amount": "3"}
+            {"unit": "HELLION", "amount": "2", "source": UnitTypeId.FACTORY},
+            {"unit": "REAPER", "amount": "3", "source": UnitTypeId.BARRACKS},
         ],
         "rebuild" : False
     },
     "PreventExpansion" : {
         "MinSupply": 4,
         "army" : [
-            {"unit": "WIDOWMINE", "amount": "2"}
+            {"unit": "WIDOWMINE", "amount": "2", "source": UnitTypeId.FACTORY},
         ],
         "rebuild" : False
     },
     "MapControl": {
         "MinSupply": 5,
         "army" : [
-            {"unit": "MARINE", "amount": "5"}
+            {"unit": "MARINE", "amount": "5", "source": UnitTypeId.BARRACKS},
         ],
         "rebuild" : True
     }

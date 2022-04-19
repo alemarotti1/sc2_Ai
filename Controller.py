@@ -295,9 +295,14 @@ class TVPController(Controller):
             army_commander : ArmyCommander = a
             needed_army = army_commander.unity_necessities
             for unity in needed_army:
-                if unity["acquired"]<unity["amount"]:
-                    for structure in self.bot.structures:
-                        structure.ab:
+                if unity["amount"] is not "fill":
+                    if unity["acquired"]<unity["amount"]:
+                        for structure in self.bot.structures(unity["source"]):
+                            abilities_list = await self.bot.get_available_abilities(structure)
+                            for abilities in abilities_list:
+                                for ability in abilities:
+                                    print("ability", ability)
+                    
 
 
 
