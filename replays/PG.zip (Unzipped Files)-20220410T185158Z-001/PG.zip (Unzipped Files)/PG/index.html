@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8"/>
+		
+		
+		<script>
+			alert("LEIA: INSTRUÇÕES DE USO");
+			alert("Para ADICIONAR um ponto de controle, clique com o botão ESQUERDO");
+			alert("Para REMOVER um ponto de controle, clique com o botão DIREITO");
+			
+		</script>
+	</head>
+	
+	<body oncontextmenu="return false;">
+		<canvas id="canvas" style=" border: 1px solid olive;"></canvas>
+		
+		
+		
+		<div class="col-sm-2" style="position: absolute; top: 10px; right: 0;">
+		  <ul class="bg-secondary nav nav-pills nav-stacked" data-offset-top="205">
+			<li class="active" id="add"><a href="#section1">Adicionar Curva</a></li>
+			<li class="active"><a href="#section1">Numero de avaliações: <input id="passos" value='10' type="number" style="color: black;"/> </a></li>
+			<li class="active"><a href="#section1">Remover curva: <input id="rem_val" type="number" style="color: black;"/> <input id="remove" value="Remover" type="button" style="color: black;"/></a></li>
+			
+			<li class="active"><a href="#section1">Fechar</a></li>
+		  </ul>
+		  <br>
+		  <ul class="bg-secondary nav nav-pills nav-stacked" id="list" data-offset-top="205">
+			<li class="active"><a href="#section1">Fechar</a></li>
+			<li class="active select"><a href="#section1">Selecionar Curva:0</a></li>
+		  </ul>
+		  <br>
+		  <ul class="bg-secondary nav nav-pills nav-stacked" id="list" data-offset-top="205">
+			<li class="active"><a id="ptct" href="#section1">Exibir Pontos Controle</a></li>
+			<li class="active"><a id="pol" href="#section1">Exibir Poligonais</a></li>
+			<li class="active"><a id="cur" href="#section1">Exibir Curvas</a></li>
+
+			<li class="active"><a href="#section1">Fechar</a></li>
+			
+		  </ul>
+		  
+		</div>
+	</body>
+	
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+		
+	<script src="canvas.js"></script>
+</html>

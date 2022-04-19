@@ -1,0 +1,1 @@
+Um programa bem simples que realiza uma abertura tradicional com uma produção de um reaper para scout

@@ -1,0 +1,43 @@
+{
+    "MainArmy" : {
+        "MinSupply": 0,
+        "army" : [
+            {"unit" : "SIEGETANK", "amount": 3},
+            {"unit" : "WIDOWMINE", "amount": 2},
+            {"unit" : "RAVEN", "amount": 1},
+            {"unit" : "MARINE", "amount": 15},
+            {"unit" : "MEDIVAC", "amount": 2},
+            {"unit" : "LIBERATOR", "amount": 2},
+            {"unit" : "BATTLECRUISER", "amount" : 3},
+            {"unit" : "MARINE", "amount": "fill"}
+
+
+        ],
+        "rebuild" : true
+    },
+    "AntiAir" : {
+        "MinSupply": 6,
+        "army" : [
+            {"unit": "CYCLONE", "amount": 2},
+            {"unit": "RAVEN", "amount": 1},
+            {"unit": "VIKINGFIGHTER", "amount": "fill"}
+        ],
+        "rebuild" : true
+    },
+    "ScoutHarass" : {
+        "MinSupply": 9,
+        "army" : [
+            {"unit": "HELLION", "amount": "2"},
+            {"unit": "REAPER", "amount": "3"}
+        ],
+        "rebuild" : false
+    },
+    "MapControl": {
+        "MinSupply": 5,
+        "army" : [
+            {"unit": "MARINE", "amount": "5"}
+        ],
+        "rebuild" : true
+    }
+}
+
