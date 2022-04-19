@@ -47,7 +47,7 @@ class ArmyCommander:
     async def run(self):
         #
         # self.action[self.objective]()
-        print ("unidades do exercito", await self.ramp_wall_bot.available_army())
+        pass
         
     
     def group(self, destination: Point2):

@@ -272,6 +272,7 @@ class TVPController(Controller):
         await self.buildingCommander.run()
         await self.assign_workers()
         await self.gathering_boost()
+        await self.produce_army()
         for army_commander in self.army_commanders:
             await army_commander.run()
 
