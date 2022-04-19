@@ -302,7 +302,7 @@ class TVPController(Controller):
                         for structure in self.bot.structures(unity["source"]):
                             abilities = await self.bot.get_available_abilities(structure)
                             for ability in abilities:
-                                if unity["unity"] in str(ability):
+                                if unity["unit"] in str(ability):
                                     print(ability)
                     
 
