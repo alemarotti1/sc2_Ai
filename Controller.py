@@ -303,7 +303,10 @@ class TVPController(Controller):
                             abilities = await self.bot.get_available_abilities(structure)
                             for ability in abilities:
                                 if unity["unit"] in str(ability):
-                                    print(ability)
+                                    if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                                        structure.train(UnitTypeId[unity["unit"]])
+                                        if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                                            structure.train(UnitTypeId[unity["unit"]])
                     
 
 
