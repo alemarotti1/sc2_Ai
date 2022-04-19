@@ -166,22 +166,22 @@ Objectives = {
     "ScoutHarass" : {
         "MinSupply": 9,
         "army" : [
-            {"unit": "HELLION", "amount": "2", "source": UnitTypeId.FACTORY},
-            {"unit": "REAPER", "amount": "3", "source": UnitTypeId.BARRACKS},
+            {"unit": "HELLION", "amount": 2, "source": UnitTypeId.FACTORY},
+            {"unit": "REAPER", "amount": 3, "source": UnitTypeId.BARRACKS},
         ],
         "rebuild" : False
     },
     "PreventExpansion" : {
         "MinSupply": 4,
         "army" : [
-            {"unit": "WIDOWMINE", "amount": "2", "source": UnitTypeId.FACTORY},
+            {"unit": "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
         ],
         "rebuild" : False
     },
     "MapControl": {
         "MinSupply": 5,
         "army" : [
-            {"unit": "MARINE", "amount": "5", "source": UnitTypeId.BARRACKS},
+            {"unit": "MARINE", "amount": 5, "source": UnitTypeId.BARRACKS},
         ],
         "rebuild" : True
     }
