@@ -299,10 +299,9 @@ class TVPController(Controller):
                 if unity["amount"] is not "fill":
                     if unity["acquired"]<unity["amount"]:
                         for structure in self.bot.structures(unity["source"]):
-                            abilities_list = await self.bot.get_available_abilities(structure)
-                            for abilities in abilities_list:
-                                for ability in abilities:
-                                    print("ability", ability)
+                            abilities = await self.bot.get_available_abilities(structure)
+                            for ability in abilities:
+                                print("ability", ability)
                     
 
 
