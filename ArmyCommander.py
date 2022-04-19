@@ -40,14 +40,27 @@ class ArmyCommander:
             unit["acquired"] = 0
         self.done : bool = False
         self.enemy_race : Race = enemy_race
+        self.assigned_army = Units([], self.ramp_wall_bot)
         
         
 
 
     async def run(self):
-        #
-        # self.action[self.objective]()
-        pass
+        await self.get_units()
+        print("assigned army: ",self.assigned_army)
+
+    async def get_units(self):
+        if self.ramp_wall_bot.iteration % 10 != 0:
+            return
+        army : Units = await self.ramp_wall_bot.available_army()
+        for unit in army:
+            id_unit_necessities = [id["unit"] for id in self.unity_necessities]
+            
+            if unit.type_id.name in id_unit_necessities:
+                self.unity_necessities[unit.type_id]["acquired"] += 1
+                self.assigned_army.append(unit)
+                army.remove(unit)
+                
         
     
     def group(self, destination: Point2):

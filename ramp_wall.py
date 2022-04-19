@@ -212,6 +212,8 @@ class RampWallBot(BotAI):
     async def available_army(self) -> Units:
         return await self.controller.available_army()
 
+    async def start_producing_army(self):
+        self.controller.start_producing = True
     
 
 

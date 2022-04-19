@@ -191,6 +191,7 @@ class BuildingCommander:
             elif not self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.has_reactor:
                 if self.ramp_wall_bot.can_afford(UnitTypeId.REACTOR):
                     self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first(AbilityId.BUILD_REACTOR_BARRACKS)
+                    await self.ramp_wall_bot.start_producing_army()
             elif self.ramp_wall_bot.supply_army<3:
                 if self.ramp_wall_bot.can_afford(UnitTypeId.REAPER):
                     #self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.train(UnitTypeId.REAPER)

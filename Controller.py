@@ -52,6 +52,7 @@ class Controller(metaclass=abc.ABCMeta):
     threats : Units = None
     MapControlCommander = MapControlCommander()
     army_commanders : List[ArmyCommander] = []
+    start_producing = False
     
     
     @abc.abstractmethod
@@ -296,17 +297,22 @@ class TVPController(Controller):
             army_commander : ArmyCommander = a
             needed_army = army_commander.unity_necessities
             for unity in needed_army:
-                if unity["amount"] is not "fill":
-                    if unity["acquired"]<unity["amount"]:
+                if unity["amount"] is "fill":
+                    continue 
 
-                        for structure in self.bot.structures(unity["source"]):
-                            abilities = await self.bot.get_available_abilities(structure)
-                            for ability in abilities:
-                                if unity["unit"] in str(ability):
-                                    if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                                        structure.train(UnitTypeId[unity["unit"]])
-                                        if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
-                                            structure.train(UnitTypeId[unity["unit"]])
+                if not unity["acquired"]<unity["amount"]:
+                    continue
+
+                for structure in self.bot.structures(unity["source"]).idle:
+                    abilities = await self.bot.get_available_abilities(structure)
+                    for ability in abilities:
+                        if unity["unit"] not in str(ability):
+                            continue
+                        if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                            structure.train(UnitTypeId[unity["unit"]])
+
+                            if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                                structure.train(UnitTypeId[unity["unit"]])
                     
 
 
