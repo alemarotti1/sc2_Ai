@@ -1,6 +1,7 @@
 from __future__ import annotations
 import abc
 from distutils.command.build import build
+from statistics import mode
 
 from typing import Dict, List, Set, TYPE_CHECKING
 
@@ -77,7 +78,12 @@ class Controller(metaclass=abc.ABCMeta):
 
     
     async def assign_workers(self):
-        await self.bot.distribute_workers(1.5)
+        await self.bot.distribute_workers(1)
+        for townhall in self.bot.townhalls(UnitTypeId.ORBITALCOMMAND):
+            townhalls = self.bot.townhalls
+            th = sorted(townhalls, key=lambda x: x.assigned_harvesters)[0]
+            if townhall.energy > 50:
+                townhall(AbilityId.CALLDOWNMULE_CALLDOWNMULE, self.bot.mineral_field.closest_to(th))
         # if self.bot.build_workers:
         #     self.bot.worker_sauration()
         return
@@ -198,7 +204,7 @@ class Controller(metaclass=abc.ABCMeta):
                     return
 
     async def find_threats(self):
-        t = []
+        t = Units([], self.bot)
         for base in self.bot.townhalls:
             threats = self.bot.enemy_units.closer_than(30, base)
             if threats.amount > 0:
@@ -219,8 +225,10 @@ class TVZController(Controller):
         self.army_commanders = []
         self.controller = None
         self.buildingCommander : BuildingCommander = BuildingCommander(self.bot, self.bot.enemy_race)
+        self.midgame_comanders_created = False
         self.army = Units([], self.bot)
         self.assigned_army = Units([], self.bot)
+
 
         
 
@@ -229,6 +237,17 @@ class TVZController(Controller):
         await self.buildingCommander.run()
         await self.assign_workers()
         await self.gathering_boost()
+        await self.produce_army()
+        for army_commander in self.army_commanders:
+            await army_commander.run()
+
+        if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
+            self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
+            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            self.midgame_comanders_created = True
+
+        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+            self.army_commanders[2].mode = "attack"
 
     async def on_start(self):
         #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
@@ -236,12 +255,43 @@ class TVZController(Controller):
         self.assigned_workers = self.gathering_places()
     
     async def available_army(self) -> Units:
-        return super().available_army()
+        return self.army
     
     async def used_army(self) -> Units:
-        return super().used_army()
+        return self.assigned_army
+    
+    async def produce_army(self):
+        for a in self.army_commanders:
+            army_commander : ArmyCommander = a
+            needed_army = army_commander.unity_necessities
+            fill : List[dict] = []
+            for unity in needed_army:
+                if unity["amount"] is "fill":
+                    fill.append(unity)
+                    continue 
 
+                if not unity["acquired"]<unity["amount"]:
+                    continue
+                
+                await self.produce_unit(unity)
+                
+            for unit in fill:
+                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
+                    u = unit.copy()
+                    u["amount"] = u["acquired"]+1
+                    await self.produce_unit(u)
 
+    async def produce_unit(self, unity):
+        for structure in self.bot.structures(unity["source"]).idle:
+            abilities = await self.bot.get_available_abilities(structure)
+            for ability in abilities:
+                if unity["unit"] not in str(ability):
+                    continue
+                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                    structure.train(UnitTypeId[unity["unit"]])
+
+                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                        structure.train(UnitTypeId[unity["unit"]])
 
 
 
@@ -278,7 +328,96 @@ class TVPController(Controller):
             await army_commander.run()
 
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
-            self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss))
+            self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
+            self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
+            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            
+            self.midgame_comanders_created = True
+        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+            self.army_commanders[2].mode = "attack"
+
+    async def on_start(self):
+        #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
+        self.worker_pool = self.bot.workers
+        self.assigned_workers = self.gathering_places()
+    
+    async def available_army(self) -> Units:
+        return self.army
+    
+    async def used_army(self) -> Units:
+        return self.assigned_army
+    
+    async def produce_army(self):
+        for a in self.army_commanders:
+            army_commander : ArmyCommander = a
+            needed_army = army_commander.unity_necessities
+            fill : List[dict] = []
+            for unity in needed_army:
+                if unity["amount"] is "fill":
+                    fill.append(unity)
+                    continue 
+
+                if not unity["acquired"]<unity["amount"]:
+                    continue
+                
+                await self.produce_unit(unity)
+                
+            for unit in fill:
+                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
+                    u = unit.copy()
+                    u["amount"] = u["acquired"]+1
+                    await self.produce_unit(u)
+
+    async def produce_unit(self, unity):
+        for structure in self.bot.structures(unity["source"]).idle:
+            abilities = await self.bot.get_available_abilities(structure)
+            for ability in abilities:
+                if unity["unit"] not in str(ability):
+                    continue
+                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                    structure.train(UnitTypeId[unity["unit"]])
+
+                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                        structure.train(UnitTypeId[unity["unit"]])
+
+
+
+########################################################################################################################
+
+
+class TVTController(Controller):
+    def __init__(self, bot):
+        self.bot = bot
+        self.game_started = False
+        self.needed_army = 0
+        self.build_workers = False
+        self.army_commanders = []
+        self.controller = None
+        self.buildingCommander : BuildingCommander = BuildingCommander(self.bot, self.bot.enemy_race)
+        self.midgame_comanders_created = False
+        self.army = Units([], self.bot)
+        self.assigned_army = Units([], self.bot)
+
+
+        
+
+    async def run(self, iteration):
+        await self.find_threats()
+        await self.buildingCommander.run()
+        await self.assign_workers()
+        await self.gathering_boost()
+        await self.produce_army()
+        for army_commander in self.army_commanders:
+            await army_commander.run()
+
+        if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
+            self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
+            self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
+            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            self.midgame_comanders_created = True
+        
+        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+            self.army_commanders[2].mode = "attack"
 
 
     async def on_start(self):
@@ -296,60 +435,34 @@ class TVPController(Controller):
         for a in self.army_commanders:
             army_commander : ArmyCommander = a
             needed_army = army_commander.unity_necessities
+            fill : List[dict] = []
             for unity in needed_army:
                 if unity["amount"] is "fill":
+                    fill.append(unity)
                     continue 
 
                 if not unity["acquired"]<unity["amount"]:
                     continue
+                
+                await self.produce_unit(unity)
+                
+            for unit in fill:
+                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
+                    u = unit.copy()
+                    u["amount"] = u["acquired"]+1
+                    await self.produce_unit(u)
 
-                for structure in self.bot.structures(unity["source"]).idle:
-                    abilities = await self.bot.get_available_abilities(structure)
-                    for ability in abilities:
-                        if unity["unit"] not in str(ability):
-                            continue
-                        if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                            structure.train(UnitTypeId[unity["unit"]])
+    async def produce_unit(self, unity):
+        for structure in self.bot.structures(unity["source"]).idle:
+            abilities = await self.bot.get_available_abilities(structure)
+            for ability in abilities:
+                if unity["unit"] not in str(ability):
+                    continue
+                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                    structure.train(UnitTypeId[unity["unit"]])
 
-                            if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
-                                structure.train(UnitTypeId[unity["unit"]])
-                    
-
-
-
-########################################################################################################################
-
-
-class TVTController(Controller):
-    def __init__(self, bot):
-        self.bot = bot
-        self.game_started = False
-        self.needed_army = 0
-        self.build_workers = False
-        self.army_commanders : List[ArmyCommander] = []
-        self.buildingCommander : BuildingCommander = BuildingCommander(self.bot, self.bot.enemy_race)
-        self.army : Units = Units([], self.bot)
-        self.assigned_army : Units = Units([], self.bot)
-
-
-    async def run(self, iteration):
-        await self.find_threats()
-        await self.buildingCommander.run()
-        await self.assign_workers()
-        await self.gathering_boost()
-        for army_commander in self.army_commanders:
-            await army_commander.run()
-
-    async def on_start(self):
-        #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
-        self.worker_pool = self.bot.workers
-        self.assigned_workers = self.gathering_places()
- 
-    async def available_army(self) -> Units:
-        return self.army
-    
-    async def used_army(self) -> Units:
-        return self.assigned_army
+                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                        structure.train(UnitTypeId[unity["unit"]])
 
 
 

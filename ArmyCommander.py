@@ -6,6 +6,7 @@ from tokenize import group
 
 
 import random
+from matplotlib import units
 from matplotlib.style import available
 
 import numpy as np
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
 class ArmyCommander:
     action = {}
-    def __init__(self, ramp_wall_bot : RampWallBot, objective : str, enemy_race : Race):
+    def __init__(self, ramp_wall_bot : RampWallBot, objective : str, enemy_race : Race, mode : str):
         self.ramp_wall_bot :RampWallBot = ramp_wall_bot
         self.objective : str  = objective
         self.available_supply = Objectives[objective]["MinSupply"]
@@ -41,25 +42,33 @@ class ArmyCommander:
         self.done : bool = False
         self.enemy_race : Race = enemy_race
         self.assigned_army = Units([], self.ramp_wall_bot)
+        self.mode = mode
         
         
 
 
     async def run(self):
         await self.get_units()
-        print("assigned army: ",self.assigned_army)
+        await self.act()
 
     async def get_units(self):
-        if self.ramp_wall_bot.iteration % 10 != 0:
+        # # if self.ramp_wall_bot.iteration % 10 != 0:
+        # #     return
+        # self.assigned_army = Units([], self.ramp_wall_bot)
+        # army : Units = await self.ramp_wall_bot.available_army()
+        # for unit in army:
+        #     id_unit_necessities = [id["unit"] for id in self.unity_necessities]
+
+        #     if unit.type_id.name in id_unit_necessities:
+        #         for unit_necessity in self.unity_necessities:
+        #             if unit.type_id.name == unit_necessity["unit"]:
+        #                 unit_necessity["acquired"] += 1
+        #                 self.assigned_army.append(unit)
+        #                 #army.remove(unit)
+        #                 break
+        if self.objective!="MainArmy":
             return
-        army : Units = await self.ramp_wall_bot.available_army()
-        for unit in army:
-            id_unit_necessities = [id["unit"] for id in self.unity_necessities]
-            
-            if unit.type_id.name in id_unit_necessities:
-                self.unity_necessities[unit.type_id]["acquired"] += 1
-                self.assigned_army.append(unit)
-                army.remove(unit)
+        self.assigned_army = self.ramp_wall_bot.units.filter(lambda unit: unit.type_id not in [UnitTypeId.SCV, UnitTypeId.MULE])
                 
         
     
@@ -74,58 +83,106 @@ class ArmyCommander:
         return grouped
 
     
-    def attack(self):
-        if not hasattr(self, "moving"):
-            self.moving = False
-        if not hasattr(self, "grouped"):
-            self.grouped = False
+    async def attack(self):
+        bases = self.ramp_wall_bot.expansion_locations_list
+        bases = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
+        for base in bases:
+            for unit in self.assigned_army:
+                unit.attack(base, queue=True)
+        # if not hasattr(self, "moving"):
+        #     self.moving = False
+        # if not hasattr(self, "grouped"):
+        #     self.grouped = False
 
-        army : Units = Units([], self.ramp_wall_bot)
-        forces = self.ramp_wall_bot.units
-        temp = self.unity_necessities.copy()
-        if not self.done:
-            for unit in temp:
-                for force in forces:
-                    if force.type_id == unit:
-                        army.append(force)
-                        temp.remove(unit)
-            if len(temp) != 0:
-                return
-            self.army = army
+        # army : Units = Units([], self.ramp_wall_bot)
+        # forces = self.ramp_wall_bot.units
+        # temp = self.unity_necessities.copy()
+        # if not self.done:
+        #     for unit in temp:
+        #         for force in forces:
+        #             if force.type_id == unit:
+        #                 army.append(force)
+        #                 temp.remove(unit)
+        #     if len(temp) != 0:
+        #         return
+        #     self.army = army
         
 
-        if not self.moving:
-            enemy_base = self.ramp_wall_bot.enemy_start_locations[0]
-            self.group(self.army.first.position)
+        # if not self.moving:
+        #     enemy_base = self.ramp_wall_bot.enemy_start_locations[0]
+        #     self.group(self.army.first.position)
 
-            enemy_base = self.ramp_wall_bot.enemy_start_locations[0]
+        #     enemy_base = self.ramp_wall_bot.enemy_start_locations[0]
             
-            unity_group_location = self.mean_point(self.army)
+        #     unity_group_location = self.mean_point(self.army)
 
-            destination = enemy_base
-            move = Point2((destination.x-unity_group_location.x, destination.y-unity_group_location.y))
-            size = np.linalg.norm(move)
-            move.x, move.y = move.x*5/size, move.y*5/size
+        #     destination = enemy_base
+        #     move = Point2((destination.x-unity_group_location.x, destination.y-unity_group_location.y))
+        #     size = np.linalg.norm(move)
+        #     move.x, move.y = move.x*5/size, move.y*5/size
 
-            destination = Point2((unity_group_location.x+move.x, unity_group_location.y+move.y))
-            destination1 = Point2((unity_group_location.x*0.8, unity_group_location.y-move.y))
+        #     destination = Point2((unity_group_location.x+move.x, unity_group_location.y+move.y))
+        #     destination1 = Point2((unity_group_location.x*0.8, unity_group_location.y-move.y))
 
 
 
         
         
-        for unit in self.army:
-            #if there is an enemy worker in range, attack it
-            workers = [UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE]
-            enemies = self.ramp_wall_bot.enemy_units.filter(lambda unit: unit.can_attack_ground)
-            if unit.distance_to(destination) < 10:
-                enemies_can_attack: Units = enemies.filter(lambda unit: unit.type_id in workers)
-                if len(enemies_can_attack) > 0:
-                    unit.attack(enemies_can_attack.closest_to(unit))
-            else:
-                unit.move(destination)
+        # for unit in self.army:
+        #     #if there is an enemy worker in range, attack it
+        #     workers = [UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE]
+        #     enemies = self.ramp_wall_bot.enemy_units.filter(lambda unit: unit.can_attack_ground)
+        #     if unit.distance_to(destination) < 10:
+        #         enemies_can_attack: Units = enemies.filter(lambda unit: unit.type_id in workers)
+        #         if len(enemies_can_attack) > 0:
+        #             unit.attack(enemies_can_attack.closest_to(unit))
+        #     else:
+        #         unit.move(destination)
 
 
+    async def defend(self):
+        threats = self.ramp_wall_bot.enemy_units
+        if not threats:
+            if not self.ramp_wall_bot.townhalls:
+                return
+            closest_th : Point2 = self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position
+            for unit in self.assigned_army:
+                if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR]:
+                    unit.attack(closest_th.towards(self.ramp_wall_bot.enemy_start_locations[0], 13))
+                else:
+                    
+                    if unit.type_id == UnitTypeId.WIDOWMINE:
+                        unit.move(closest_th.towards_with_random_angle(self.ramp_wall_bot.enemy_start_locations[0], 20))
+                        unit(AbilityId.BURROWDOWN_WIDOWMINE, queue=True)
+                        return
+
+                    unit.attack(closest_th.towards(self.ramp_wall_bot.enemy_start_locations[0], 8))
+                    if unit.type_id == UnitTypeId.SIEGETANK:
+                        unit(AbilityId.SIEGEMODE_SIEGEMODE, queue=True)
+                    if unit.type_id == UnitTypeId.SIEGETANKSIEGED:
+                        unit.hold_position(queue=True)
+                    if unit.type_id == UnitTypeId.LIBERATOR:
+                        print(await self.ramp_wall_bot.get_available_abilities(unit))
+                        unit(AbilityId.LIBERATORMORPHTOAG_LIBERATORAGMODE, queue=True)
+        else:
+            for unit in self.assigned_army:
+                pos = self.ramp_wall_bot.enemy_units.closest_to(unit).position
+                if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR]:
+                    unit.attack(pos.towards(unit.position, max(unit.ground_range, unit.air_range)+0.5))
+                else:
+                    
+                    if unit.type_id == UnitTypeId.SIEGETANK:
+                        unit.move(pos.towards(unit.position,13))
+                        unit(AbilityId.SIEGEMODE_SIEGEMODE, queue=True)
+                    if unit.type_id == UnitTypeId.SIEGETANKSIEGED:
+                        unit.hold_position(queue=True)
+                    if unit.type_id == UnitTypeId.LIBERATOR:
+                        print(await self.ramp_wall_bot.get_available_abilities(unit))
+                        unit(AbilityId.LIBERATORMORPHTOAG_LIBERATORAGMODE, queue=True)
+                        
+    
+    async def harass(self):
+        pass
             
     def mean_point(units: Units):
         point = {"x": 0, "y": 0}
@@ -137,6 +194,14 @@ class ArmyCommander:
         point["x"] = point["x"]/total
         point["y"] = point["y"]/total
         return Point2((point["x"], point["y"]))
+    
+    async def act(self):
+        if self.mode == "attack":
+            await self.attack()
+        elif self.mode == "defend" or true:
+            await self.defend()
+        elif self.mode == "harass":
+            await self.harass()
 
 
 
@@ -168,7 +233,7 @@ Objectives = {
         "rebuild" : True
     },
     "AntiAir" : {
-        "MinSupply": 6,
+        "MinSupply": 8,
         "army" : [
             {"unit": "CYCLONE", "amount": 2, "source": UnitTypeId.FACTORY},
             {"unit": "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
