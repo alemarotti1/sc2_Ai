@@ -245,58 +245,10 @@ class Controller(metaclass=abc.ABCMeta):
 
                     if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
                         structure.train(UnitTypeId[unity["unit"]])
-
-########################################################################################################################
-
-class TVZController(Controller):
-    def __init__(self, bot):
-        self.bot = bot
-        self.game_started = False
-        self.needed_army = 0
-        self.build_workers = False
-        self.army_commanders = []
-        self.controller = None
-        self.buildingCommander : BuildingCommander = BuildingCommander(self.bot, self.bot.enemy_race)
-        self.midgame_comanders_created = False
-        self.army = Units([], self.bot)
-        self.assigned_army = Units([], self.bot)
-
-
-        
-
-    async def run(self, iteration):
-        await self.find_threats()
-        await self.buildingCommander.run()
-        await self.assign_workers()
-        await self.gathering_boost()
-        await self.produce_army()
-        for army_commander in self.army_commanders:
-            await army_commander.run()
-
-        if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
-            self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
-            self.midgame_comanders_created = True
-
-        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
-            self.army_commanders[2].mode = "attack"
-
-    async def on_start(self):
-        #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
-        self.worker_pool = self.bot.workers
-        self.assigned_workers = self.gathering_places()
     
-    async def available_army(self) -> Units:
-        return self.army
-    
-    async def used_army(self) -> Units:
-        return self.assigned_army
     async def refresh_army_tag(self):
         self.army_tag = { unit.tag: unit for unit in self.all_units }
-    
-
-    
-        
+ 
 
 ########################################################################################################################
 
@@ -317,7 +269,6 @@ class TVZController(Controller):
         
 
     async def run(self, iteration):
-        self.refresh_army_tag()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -333,7 +284,6 @@ class TVZController(Controller):
 
         if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
             self.army_commanders[2].mode = "attack"
-        
 
     async def on_start(self):
         #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
@@ -345,7 +295,8 @@ class TVZController(Controller):
     
     async def used_army(self) -> Units:
         return self.assigned_army
-    
+   
+
 
 
 
