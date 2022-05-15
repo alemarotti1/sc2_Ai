@@ -140,20 +140,11 @@ class ArmyCommander:
         point["x"] += slower_unit.position.x
         point["y"] += slower_unit.position.y
 
-        if len(pos) > 0:
-            slower_unit.attack(base, queue=True)
-            for unit in self.assigned_army:
-                if unit is not slower_unit:
-                    unit.attack(slower_unit.position)
 
         for base in bases:
             slower_unit.attack(base, queue=True)
             for unit in self.assigned_army:
-                if unit is not slower_unit:
-                    if not unit.distance_to(base) <= 12:
-                        unit.attack(Point2((point["x"], point["y"])))
-                    else:
-                        unit.attack(base, queue=True)
+                unit.attack(base, queue=True)
         
 
 
@@ -277,7 +268,6 @@ Objectives = {
         "MinSupply": 200,
         "army" : [
             {"unit" : "SIEGETANK", "amount": 3, "source": UnitTypeId.FACTORY},
-            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
             {"unit" : "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
             {"unit" : "MARINE", "amount": 15, "source": UnitTypeId.BARRACKS},
             {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
