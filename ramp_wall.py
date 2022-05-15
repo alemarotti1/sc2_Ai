@@ -8,7 +8,7 @@ from tabnanny import check
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 
 import random
-from typing import List, Set
+from typing import List, Set, Tuple
 
 import numpy as np
 
@@ -81,25 +81,6 @@ class RampWallBot(BotAI):
                     towhhall.train(UnitTypeId.SCV)
 
 
-        # if not self.army_commanders:
-        #     self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
-
-        # self.buildingCommander.run()
-
-        # self.worker_sauration()
-
-        # for army_commander in self.army_commanders:
-        #     army_commander.run()
-
-        
-        
-        # #if barracks are ready and no reapers were build, train one reaper
-        # if self.supply_left > 0 and self.units(UnitTypeId.REAPER).amount == 0:
-        #     # Loop through all idle barracks
-        #     for rax in self.structures(UnitTypeId.BARRACKS).idle:
-        #         if self.can_afford(UnitTypeId.REAPER):
-        #             rax.train(UnitTypeId.REAPER)
-
 
         # Raise depos when enemies are nearby
         for depo in self.structures(UnitTypeId.SUPPLYDEPOT).ready:
@@ -121,10 +102,12 @@ class RampWallBot(BotAI):
 
         # depots: Units = self.structures.of_type({UnitTypeId.SUPPLYDEPOT, UnitTypeId.SUPPLYDEPOTLOWERED})
 
+    
 
 
 
-
+    def get_threats(self):
+        return self.controller.threats
 
         
         
@@ -241,9 +224,11 @@ def main():
         maps.get(map),
         [
             Bot(Race.Terran, RampWallBot()), 
-            Computer(Race.Protoss, Difficulty.Hard)
+            Computer(Race.Terran, difficulty=Difficulty.Easy)
         ],
         realtime=False,
+        save_replay_as="replay"
+        
         # sc2_version="4.10.1",
     )
 
