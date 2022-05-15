@@ -280,7 +280,7 @@ class TVZController(Controller):
 
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
             self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            #self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
 
         if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
@@ -337,11 +337,12 @@ class TVPController(Controller):
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
             self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
             self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            #self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             
             self.midgame_comanders_created = True
-        #if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
-        #    self.army_commanders[2].mode = "attack"
+
+        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+           self.army_commanders[2].mode = "attack"
 
     async def on_start(self):
         #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
@@ -390,11 +391,11 @@ class TVTController(Controller):
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
             #self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
             self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            #self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
         
-        # if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
-        #     self.army_commanders[2].mode = "attack"
+        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+            self.army_commanders[2].mode = "attack"
 
 
     async def on_start(self):

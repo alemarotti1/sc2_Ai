@@ -95,9 +95,25 @@ class ArmyCommander:
     async def attack(self):
         bases = self.ramp_wall_bot.expansion_locations_list
         bases = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
+        
+        def unit_velocity(unit: Unit):
+            return unit.movement_speed
+
+        sorted_units = self.assigned_army.copy()
+        sorted_units.sort(key = unit_velocity)
+        slower_unit: Unit = sorted_units[0]
+        point = {"x": 0, "y": 0}
+        point["x"] += slower_unit.position.x
+        point["y"] += slower_unit.position.y
+
         for base in bases:
+            slower_unit.attack(base, queue=True)
             for unit in self.assigned_army:
-                unit.attack(base, queue=True)
+                if unit is not slower_unit:
+                    if not unit.distance_to(base) <= 12:
+                        unit.attack(point)
+                    else:
+                        unit.attack(base, queue=True)
         
 
 
