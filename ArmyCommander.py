@@ -77,7 +77,7 @@ class ArmyCommander:
         await self.act()
 
     async def get_units(self):
-        
+        pass
 
         
     
