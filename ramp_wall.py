@@ -75,10 +75,10 @@ class RampWallBot(BotAI):
         self.iteration = iteration
         await self.controller.run(iteration=iteration)
 
-        for towhhall in self.townhalls.idle: 
-            if towhhall.assigned_harvesters < 16:
+        if self.units(UnitTypeId.SCV).amount < 50 or 22 * self.units(UnitTypeId.SCV).amount < self.townhalls.amount:
+            for townhall in self.townhalls.idle:
                 if self.can_afford(UnitTypeId.SCV):
-                    towhhall.train(UnitTypeId.SCV)
+                    townhall.train(UnitTypeId.SCV)
 
 
         # if not self.army_commanders:
@@ -133,10 +133,12 @@ class RampWallBot(BotAI):
         
 
     async def on_building_construction_started(self, unit: Unit):
-        print(f"Construction of building {unit} started at {unit.position}.")
+        pass
+        # print(f"Construction of building {unit} started at {unit.position}.")
 
     async def on_building_construction_complete(self, unit: Unit):
-        print(f"Construction of building {unit} completed at {unit.position}.")
+        pass
+        # print(f"Construction of building {unit} completed at {unit.position}.")
 
 
     def draw_facing_units(self):
