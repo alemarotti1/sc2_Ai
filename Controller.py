@@ -55,6 +55,7 @@ class Controller(metaclass=abc.ABCMeta):
     army_commanders : List[ArmyCommander] = []
     start_producing = False
     army_tag = {}
+    buildingCommander : BuildingCommander = None
     
     
     @abc.abstractmethod
@@ -217,6 +218,8 @@ class Controller(metaclass=abc.ABCMeta):
         self.army_tag = { unit.tag: unit for unit in self.all_units }
     
     async def produce_army(self):
+        if self.buildingCommander.expanded_times<=1:
+            return
         for a in self.army_commanders:
             army_commander : ArmyCommander = a
             needed_army = army_commander.unity_necessities
