@@ -81,6 +81,8 @@ class ArmyCommander:
 
 
         for unit_necessity in self.unity_necessities:
+            if unit_necessity["amount"]=="fill":
+                return
             if unit_necessity["acquired"] < unit_necessity["amount"]:
                 for unit in army:
                     if unit.type_id == UnitTypeId[unit_necessity["unit"]]:
@@ -122,7 +124,7 @@ class ArmyCommander:
             for unit in self.assigned_army:
                 if unit is not slower_unit:
                     if not unit.distance_to(base) <= 12:
-                        unit.attack(point)
+                        unit.attack(point, queue=True)
                     else:
                         unit.attack(base, queue=True)
         
