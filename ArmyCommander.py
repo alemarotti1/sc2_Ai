@@ -72,12 +72,23 @@ class ArmyCommander:
         
         
         if self.ramp_wall_bot.iteration % 10 != 0:    
-            await self.update_army()
             await self.get_units()
+            await self.update_army()
         await self.act()
 
     async def get_units(self):
-        pass
+        army =  await self.ramp_wall_bot.available_army()
+
+
+        for unit_necessity in self.unity_necessities:
+            if unit_necessity["acquired"] < unit_necessity["amount"]:
+                for unit in army:
+                    if unit.type_id == UnitTypeId[unit_necessity["unit"]]:
+                        self.assigned_army_tags.add(unit.tag)
+                        unit_necessity["acquired"] += 1
+                        army.remove(unit)
+                        break
+
 
         
     
@@ -125,7 +136,7 @@ class ArmyCommander:
             closest_th : Point2 = self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position
             for unit in self.assigned_army:
                 if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR]:
-                    unit.attack(closest_th.towards(self.ramp_wall_bot.enemy_start_locations[0], 13))
+                    unit.attack(closest_th.towards(self.targets[0], 13))
                 else:
                     
                     if unit.type_id == UnitTypeId.WIDOWMINE:
@@ -133,7 +144,7 @@ class ArmyCommander:
                         unit(AbilityId.BURROWDOWN_WIDOWMINE, queue=True)
                         return
 
-                    unit.attack(closest_th.towards(self.ramp_wall_bot.enemy_start_locations[0], 8))
+                    unit.attack(closest_th.towards(self.targets[0], 8))
                     if unit.type_id == UnitTypeId.SIEGETANK:
                         unit(AbilityId.SIEGEMODE_SIEGEMODE, queue=True)
                     if unit.type_id == UnitTypeId.SIEGETANKSIEGED:
@@ -180,9 +191,9 @@ class ArmyCommander:
         if self.phase == "move":
 
             for hellion in hellions:
-                hellion.move(self.ramp_wall_bot.enemy_start_locations[1].towards(self.ramp_wall_bot.start_location, 30))
+                hellion.move(self.targets[1].towards(self.ramp_wall_bot.start_location, 30))
             for reaper in reapers:
-                reaper.move(self.ramp_wall_bot.enemy_start_locations[1].towards(self.ramp_wall_bot.start_location, 30))
+                reaper.move(self.targets[0].towards(self.ramp_wall_bot.start_location, 30))
         
         
     def mean_point(units: Units):
