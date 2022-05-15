@@ -50,7 +50,7 @@ class ArmyCommander:
         
     async def update_army(self):
         self.assigned_army = Units([], self.ramp_wall_bot)
-        for unit_tag in self.assigned_army_tags:
+        for unit_tag in self.assigned_army_tags.copy():
             unit = self.ramp_wall_bot.units.find_by_tag(unit_tag)
             if unit:
                 self.assigned_army.append(unit)
@@ -70,36 +70,14 @@ class ArmyCommander:
             bases = self.ramp_wall_bot.expansion_locations_list
             self.targets = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
         
-        await self.update_army()
-        await self.get_units()
+        
+        if self.ramp_wall_bot.iteration % 10 != 0:    
+            await self.update_army()
+            await self.get_units()
         await self.act()
 
     async def get_units(self):
-        if self.ramp_wall_bot.iteration % 10 != 0:
-            return
-        self.assigned_army = Units([], self.ramp_wall_bot)
-        army : Units = await self.ramp_wall_bot.available_army()
-        for unit in army:
-            id_unit_necessities = [id["unit"] for id in self.unity_necessities]
-
-            if unit.type_id.name in id_unit_necessities:
-                for unit_necessity in self.unity_necessities:
-                    if unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] != "fill":
-                        if unit_necessity["acquired"] < unit_necessity["amount"]:
-                            unit_necessity["acquired"] += 1
-                            self.assigned_army_tags.add(unit.tag)
-                            break
-                        army.remove(unit)
-                        break
-                    elif unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] == "fill":
-                        units = Units([self.ramp_wall_bot.units.find_by_tag(tag) for tag in self.assigned_army_tags], self.ramp_wall_bot)
-                        total_supply = 0
-                        for u in units:
-                            if u:
-                                total_supply += self.ramp_wall_bot.calculate_supply_cost(u.type_id)
-                        if total_supply < self.available_supply:
-                            self.assigned_army_tags.add(unit.tag)
-                            break
+        
 
         
     

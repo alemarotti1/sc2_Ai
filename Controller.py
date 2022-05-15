@@ -71,7 +71,7 @@ class Controller(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    async def available_army(self) -> Units:
+    async def available_army(self) -> List[int]:
         pass
 
     @abc.abstractmethod
@@ -246,8 +246,8 @@ class Controller(metaclass=abc.ABCMeta):
                     if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
                         structure(ability)
     
-    async def refresh_army_tag(self):
-        self.army_tag = { unit.tag: unit for unit in self.bot.units }
+    async def refresh_army(self):
+        self.army = self.bot.units.filter(lambda unit: unit.type_id in [UnitTypeId.MARINE, UnitTypeId.REAPER, UnitTypeId.MARAUDER, UnitTypeId.GHOST, UnitTypeId.HELLION, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.THOR, UnitTypeId.CYCLONE, UnitTypeId.WIDOWMINE, UnitTypeId.WIDOWMINEBURROWED, UnitTypeId.VIKINGFIGHTER, UnitTypeId.VIKINGASSAULT , UnitTypeId.MEDIVAC, UnitTypeId.RAVEN, UnitTypeId.BANSHEE, UnitTypeId.BATTLECRUISER, UnitTypeId.AUTOTURRET, UnitTypeId.LIBERATOR])
  
 
 ########################################################################################################################
@@ -269,7 +269,7 @@ class TVZController(Controller):
         
 
     async def run(self, iteration):
-        await self.refresh_army_tag()
+        await self.refresh_army()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -291,8 +291,8 @@ class TVZController(Controller):
         self.worker_pool = self.bot.workers
         self.assigned_workers = self.gathering_places()
     
-    async def available_army(self) -> Units:
-        return self.army
+    async def available_army(self) -> List[int]:
+        return self.army_tag
     
     async def used_army(self) -> Units:
         return self.assigned_army
@@ -325,7 +325,7 @@ class TVPController(Controller):
         
 
     async def run(self, iteration):
-        await self.refresh_army_tag()
+        await self.refresh_army()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -348,8 +348,8 @@ class TVPController(Controller):
         self.worker_pool = self.bot.workers
         self.assigned_workers = self.gathering_places()
     
-    async def available_army(self) -> Units:
-        return self.army
+    async def available_army(self) -> List[int]:
+        return self.army_tag
     
     async def used_army(self) -> Units:
         return self.assigned_army
@@ -378,7 +378,7 @@ class TVTController(Controller):
         
 
     async def run(self, iteration):
-        await self.refresh_army_tag()
+        await self.refresh_army()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -401,8 +401,8 @@ class TVTController(Controller):
         self.worker_pool = self.bot.workers
         self.assigned_workers = self.gathering_places()
     
-    async def available_army(self) -> Units:
-        return self.army
+    async def available_army(self) -> List[int]:
+        return self.army_tag
     
     async def used_army(self) -> Units:
         return self.assigned_army
