@@ -43,34 +43,62 @@ class ArmyCommander:
         self.done : bool = False
         self.enemy_race : Race = enemy_race
         self.assigned_army = Units([], self.ramp_wall_bot)
+        self.assigned_army_tags = []
         self.mode = mode
+        self.targets = None
         
+    async def update_army(self):
+        self.assigned_army = []
+        for unit_tag in self.assigned_army_tags:
+            unit = self.ramp_wall_bot.units.find_by_tag(unit_tag)
+            if unit:
+                self.assigned_army.append(unit)
+            else:
+                self.assigned_army_tags.remove(unit_tag)
         
+        for unit in self.assigned_army:
+            for unit_necessity in self.unity_necessities:
+                if unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] != "fill":
+                    unit_necessity["acquired"] += 1
+                    break
 
 
     async def run(self):
+        if self.targets is None:
+            bases = self.ramp_wall_bot.expansion_locations_list
+            self.targets = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
+        
+        self.update_army()
         await self.get_units()
         await self.act()
 
     async def get_units(self):
-        # # if self.ramp_wall_bot.iteration % 10 != 0:
-        # #     return
-        # self.assigned_army = Units([], self.ramp_wall_bot)
-        # army : Units = await self.ramp_wall_bot.available_army()
-        # for unit in army:
-        #     id_unit_necessities = [id["unit"] for id in self.unity_necessities]
-
-        #     if unit.type_id.name in id_unit_necessities:
-        #         for unit_necessity in self.unity_necessities:
-        #             if unit.type_id.name == unit_necessity["unit"]:
-        #                 unit_necessity["acquired"] += 1
-        #                 self.assigned_army.append(unit)
-        #                 #army.remove(unit)
-        #                 break
-        if self.objective!="MainArmy":
+        if self.ramp_wall_bot.iteration % 10 != 0:
             return
-        self.assigned_army = self.ramp_wall_bot.units.filter(lambda unit: unit.type_id not in [UnitTypeId.SCV, UnitTypeId.MULE])
-                
+        self.assigned_army = Units([], self.ramp_wall_bot)
+        army : Units = await self.ramp_wall_bot.available_army()
+        for unit in army:
+            id_unit_necessities = [id["unit"] for id in self.unity_necessities]
+
+            if unit.type_id.name in id_unit_necessities:
+                for unit_necessity in self.unity_necessities:
+                    if unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] != "fill":
+                        if unit_necessity["acquired"] < unit_necessity["amount"]:
+                            unit_necessity["acquired"] += 1
+                            self.assigned_army_tags.append(unit.tag)
+                            break
+                        army.remove(unit)
+                        break
+                    elif unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] == "fill":
+                        units = Units([self.ramp_wall_bot.units.find_by_tag(tag) for tag in self.assigned_army_tags], self.ramp_wall_bot)
+                        total_supply = 0
+                        for u in units:
+                            if u:
+                                total_supply += self.ramp_wall_bot.calculate_supply_cost(u.type_id)
+                        if total_supply < self.available_supply:
+                            self.assigned_army_tags.append(unit.tag)
+                            break
+
         
     
     def group(self, destination: Point2):
@@ -90,55 +118,7 @@ class ArmyCommander:
         for base in bases:
             for unit in self.assigned_army:
                 unit.attack(base, queue=True)
-        # if not hasattr(self, "moving"):
-        #     self.moving = False
-        # if not hasattr(self, "grouped"):
-        #     self.grouped = False
-
-        # army : Units = Units([], self.ramp_wall_bot)
-        # forces = self.ramp_wall_bot.units
-        # temp = self.unity_necessities.copy()
-        # if not self.done:
-        #     for unit in temp:
-        #         for force in forces:
-        #             if force.type_id == unit:
-        #                 army.append(force)
-        #                 temp.remove(unit)
-        #     if len(temp) != 0:
-        #         return
-        #     self.army = army
         
-
-        # if not self.moving:
-        #     enemy_base = self.ramp_wall_bot.enemy_start_locations[0]
-        #     self.group(self.army.first.position)
-
-        #     enemy_base = self.ramp_wall_bot.enemy_start_locations[0]
-            
-        #     unity_group_location = self.mean_point(self.army)
-
-        #     destination = enemy_base
-        #     move = Point2((destination.x-unity_group_location.x, destination.y-unity_group_location.y))
-        #     size = np.linalg.norm(move)
-        #     move.x, move.y = move.x*5/size, move.y*5/size
-
-        #     destination = Point2((unity_group_location.x+move.x, unity_group_location.y+move.y))
-        #     destination1 = Point2((unity_group_location.x*0.8, unity_group_location.y-move.y))
-
-
-
-        
-        
-        # for unit in self.army:
-        #     #if there is an enemy worker in range, attack it
-        #     workers = [UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE]
-        #     enemies = self.ramp_wall_bot.enemy_units.filter(lambda unit: unit.can_attack_ground)
-        #     if unit.distance_to(destination) < 10:
-        #         enemies_can_attack: Units = enemies.filter(lambda unit: unit.type_id in workers)
-        #         if len(enemies_can_attack) > 0:
-        #             unit.attack(enemies_can_attack.closest_to(unit))
-        #     else:
-        #         unit.move(destination)
 
 
     async def defend(self):
@@ -193,8 +173,22 @@ class ArmyCommander:
                         
     
     async def harass(self):
-        pass
-            
+        if not self.phase:
+            self.phase = "defend"
+        
+        hellions = self.assigned_army.of_type(UnitTypeId.HELLION)
+        reapers = self.assigned_army.of_type(UnitTypeId.REAPER)
+        if self.phase=="defend" and not (hellion.amount == 2 and reaper.amount == 3):
+            return
+        self.phase = "move"
+        if self.phase == "move":
+
+            for hellion in hellions:
+                hellion.move(self.ramp_wall_bot.enemy_start_locations[1].towards(self.ramp_wall_bot.start_location, 30))
+            for reaper in reapers:
+                reaper.move(self.ramp_wall_bot.enemy_start_locations[1].towards(self.ramp_wall_bot.start_location, 30))
+        
+        
     def mean_point(units: Units):
         point = {"x": 0, "y": 0}
         total = 0
