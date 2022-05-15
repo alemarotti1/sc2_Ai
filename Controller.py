@@ -71,10 +71,6 @@ class Controller(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    async def available_army(self) -> List[int]:
-        pass
-
-    @abc.abstractmethod
     async def used_army(self) -> Units:
         pass
 
@@ -250,6 +246,9 @@ class Controller(metaclass=abc.ABCMeta):
         self.army = self.bot.units.filter(lambda unit: unit.type_id in [UnitTypeId.MARINE, UnitTypeId.REAPER, UnitTypeId.MARAUDER, UnitTypeId.GHOST, UnitTypeId.HELLION, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.THOR, UnitTypeId.CYCLONE, UnitTypeId.WIDOWMINE, UnitTypeId.WIDOWMINEBURROWED, UnitTypeId.VIKINGFIGHTER, UnitTypeId.VIKINGASSAULT , UnitTypeId.MEDIVAC, UnitTypeId.RAVEN, UnitTypeId.BANSHEE, UnitTypeId.BATTLECRUISER, UnitTypeId.AUTOTURRET, UnitTypeId.LIBERATOR])
  
 
+    async def available_army(self) -> Units:
+        return self.army
+
 ########################################################################################################################
 
 class TVZController(Controller):
@@ -291,8 +290,6 @@ class TVZController(Controller):
         self.worker_pool = self.bot.workers
         self.assigned_workers = self.gathering_places()
     
-    async def available_army(self) -> List[int]:
-        return self.army_tag
     
     async def used_army(self) -> Units:
         return self.assigned_army
@@ -348,8 +345,6 @@ class TVPController(Controller):
         self.worker_pool = self.bot.workers
         self.assigned_workers = self.gathering_places()
     
-    async def available_army(self) -> List[int]:
-        return self.army_tag
     
     async def used_army(self) -> Units:
         return self.assigned_army
@@ -400,9 +395,7 @@ class TVTController(Controller):
     async def on_start(self):
         self.worker_pool = self.bot.workers
         self.assigned_workers = self.gathering_places()
-    
-    async def available_army(self) -> List[int]:
-        return self.army_tag
+
     
     async def used_army(self) -> Units:
         return self.assigned_army
@@ -455,8 +448,6 @@ class RandomController(Controller):
         temp.buildingCommander.step = step
         return temp
     
-    async def available_army(self) -> Units:
-        return self.army
     
     async def used_army(self) -> Units:
         return self.assigned_army
