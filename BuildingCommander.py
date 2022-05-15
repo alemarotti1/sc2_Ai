@@ -182,9 +182,6 @@ class BuildingCommander:
                 self.expanded_times += 1
                 self.step += 1
 
-            self.building_cc = False
-            self.landing_cc = False
-
         if self.step >= 1:
             end = True
 
@@ -192,13 +189,14 @@ class BuildingCommander:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.FACTORY):
                     position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.position, 20, placement_step=3)
-                    workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-                    worker = workers.closest_to(position)
-                    if worker:
-                        worker.build(UnitTypeId.FACTORY, position)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.FACTORY, position)
 
             if len(self.ramp_wall_bot.structures(UnitTypeId.BARRACKS)) > 0 and \
-               not self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.has_add_on and \
+               len(self.ramp_wall_bot.structures(UnitTypeId.BARRACKSTECHLAB)) == 0 and \
                len(self.ramp_wall_bot.structures(UnitTypeId.FACTORY)) > 0:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.TECHLAB):
@@ -209,13 +207,14 @@ class BuildingCommander:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.STARPORT):
                     position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.position, 20, placement_step=3)
-                    workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-                    worker = workers.closest_to(position)
-                    if worker:
-                        worker.build(UnitTypeId.STARPORT, position)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.STARPORT, position)
 
             if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORY)) > 0 and \
-               not self.ramp_wall_bot.structures(UnitTypeId.FACTORY).first.has_add_on:
+               len(self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB)) == 0:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.TECHLAB):
                     self.ramp_wall_bot.structures(UnitTypeId.FACTORY).first(AbilityId.BUILD_TECHLAB_FACTORY)
@@ -231,29 +230,37 @@ class BuildingCommander:
         
         if self.step >= 2:
 
+            end = True
+
             if len(self.ramp_wall_bot.structures(UnitTypeId.BARRACKS)) == 1:
+                end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.BARRACKS):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.position, 30, placement_step=3)
-                    workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-                    worker = workers.closest_to(position)
-                    if worker:
-                        worker.build(UnitTypeId.BARRACKS, position)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).first.position, 20, placement_step=3)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.BARRACKS, position)
 
             if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORY)) == 1:
+                end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.FACTORY):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.FACTORY).first.position, 20, placement_step=3)
-                    workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-                    worker = workers.closest_to(position)
-                    if worker:
-                        worker.build(UnitTypeId.FACTORY, position)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.FACTORY).first.position, 15, placement_step=3)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.FACTORY, position)
             
             if len(self.ramp_wall_bot.structures(UnitTypeId.STARPORT)) == 1:
+                end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.STARPORT):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.STARPORT).first.position, 20, placement_step=3)
-                    workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-                    worker = workers.closest_to(position)
-                    if worker:
-                        worker.build(UnitTypeId.STARPORT, position)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.structures(UnitTypeId.STARPORT).first.position, 15, placement_step=3)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.STARPORT, position)
             
             if len(self.ramp_wall_bot.structures(UnitTypeId.BARRACKS)) == 2 and \
                not self.ramp_wall_bot.structures(UnitTypeId.BARRACKS)[1].has_add_on:
@@ -268,7 +275,7 @@ class BuildingCommander:
                     self.ramp_wall_bot.structures(UnitTypeId.FACTORY)[1](AbilityId.BUILD_REACTOR_FACTORY)
             
             if len(self.ramp_wall_bot.structures(UnitTypeId.STARPORT)) == 2 and \
-               not self.ramp_wall_bot.structures(UnitTypeId.STARPORT).first.has_add_on:
+               len(self.ramp_wall_bot.structures(UnitTypeId.STARPORTTECHLAB)) == 0:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.TECHLAB):
                     self.ramp_wall_bot.structures(UnitTypeId.STARPORT).first(AbilityId.BUILD_TECHLAB_STARPORT)
@@ -279,7 +286,7 @@ class BuildingCommander:
                 if self.ramp_wall_bot.can_afford(UnitTypeId.REACTOR):
                     self.ramp_wall_bot.structures(UnitTypeId.STARPORT)[1](AbilityId.BUILD_REACTOR_STARPORT)
 
-            if self.step == 2:
+            if end and self.step == 2:
                 self.step += 1
 
         if self.step >= 3:
@@ -301,6 +308,57 @@ class BuildingCommander:
                         self.builder.build(UnitTypeId.COMMANDCENTER, closest_expansion_point)
                         self.expanded_times += 1
 
+                        if self.step == 3:
+                            self.step += 1
+        
+        if self.step >= 4:
+            if self.ramp_wall_bot.structures(UnitTypeId.ARMORY).amount == 0:
+                if self.ramp_wall_bot.can_afford(UnitTypeId.ARMORY):
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls.first.position, 15, placement_step=3)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.ARMORY, position)
+            
+            if self.ramp_wall_bot.structures(UnitTypeId.ENGINEERINGBAY).amount == 0:
+                if self.ramp_wall_bot.can_afford(UnitTypeId.ENGINEERINGBAY):
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls.first.position, 15, placement_step=3)
+                    if position:
+                        workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+                        worker = workers.closest_to(position)
+                        if worker:
+                            worker.build(UnitTypeId.ENGINEERINGBAY, position)
+
+            AbilitiesEB = [AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL1,
+                           AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL1,
+                           AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL2,
+                           AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL2,
+                           AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL3,
+                           AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL3]
+            AbilitiesAR = [AbilityId.ARMORYRESEARCH_TERRANVEHICLEPLATINGLEVEL1,
+                           AbilityId.ARMORYRESEARCH_TERRANVEHICLEWEAPONSLEVEL1,
+                           AbilityId.ARMORYRESEARCH_TERRANVEHICLEPLATINGLEVEL2,
+                           AbilityId.ARMORYRESEARCH_TERRANVEHICLEWEAPONSLEVEL2,
+                           AbilityId.ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL1,
+                           AbilityId.ARMORYRESEARCH_TERRANSHIPWEAPONSLEVEL1,
+                           AbilityId.ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL2,
+                           AbilityId.ARMORYRESEARCH_TERRANSHIPWEAPONSLEVEL2,
+                           AbilityId.ARMORYRESEARCH_TERRANVEHICLEPLATINGLEVEL3,
+                           AbilityId.ARMORYRESEARCH_TERRANVEHICLEWEAPONSLEVEL3,
+                           AbilityId.ARMORYRESEARCH_TERRANSHIPPLATINGLEVEL3,
+                           AbilityId.ARMORYRESEARCH_TERRANSHIPWEAPONSLEVEL3,
+                           ]
+
+            for building in [UnitTypeId.ARMORY, UnitTypeId.ENGINEERINGBAY] if self.enemy_race == Race.Protoss else [UnitTypeId.ENGINEERINGBAY, UnitTypeId.ARMORY]:
+                if self.ramp_wall_bot.structures(building).idle.amount > 0:
+                    for ability in AbilitiesAR if building == UnitTypeId.ARMORY else AbilitiesEB:
+                        if self.ramp_wall_bot.minerals > 300 and self.ramp_wall_bot.vespene > 300:
+                            avaliable: List[AbilityId] = await self.ramp_wall_bot.get_available_abilities(self.ramp_wall_bot.structures(building).first)
+                            if ability in avaliable:
+                                self.ramp_wall_bot.structures(building).first(ability)
+                                break
+
         for cc in self.ramp_wall_bot.townhalls(UnitTypeId.COMMANDCENTER).idle:
             if(self.ramp_wall_bot.can_afford(UnitTypeId.ORBITALCOMMAND)) and cc.position in self.ramp_wall_bot.expansion_locations_list:
                 cc(AbilityId.UPGRADETOORBITAL_ORBITALCOMMAND)
@@ -321,25 +379,6 @@ class BuildingCommander:
                                 worker.build(UnitTypeId.REFINERY, target_gas, queue=True)
         
 
-        # if len(self.ramp_wall_bot.structures.ready(UnitTypeId.FACTORY))==1:
-        #     if not self.ramp_wall_bot.structures(UnitTypeId.FACTORY).first.has_add_on:
-        #         barracks_list = self.ramp_wall_bot.structures(UnitTypeId.BARRACKS).idle.filter(lambda unit: unit.has_add_on)
-        #         factory = self.ramp_wall_bot.structures(UnitTypeId.FACTORY).idle.first
-        #         if barracks_list and factory:
-        #             barracks = barracks_list.first
-        #             self.position_barracks : Point2 = barracks.position
-        #             self.position_factory : Point2 = factory.position
-        #             barracks(AbilityId.LIFT_BARRACKS)
-        #             factory(AbilityId.LIFT_FACTORY)
-
-        # if self.ramp_wall_bot.structures(UnitTypeId.FACTORYFLYING) and self.ramp_wall_bot.structures(UnitTypeId.BARRACKSFLYING):
-        #     factory = self.ramp_wall_bot.structures(UnitTypeId.FACTORYFLYING).first
-        #     barracks = self.ramp_wall_bot.structures(UnitTypeId.BARRACKSFLYING).first
-
-        #     barracks(AbilityId.LAND_BARRACKS, self.position_factory)
-        #     factory(AbilityId.LAND_FACTORY, self.position_barracks)
-
-        
         if (self.ramp_wall_bot.supply_left < 9 and self.ramp_wall_bot.townhalls and self.ramp_wall_bot.supply_used >= 20
             and self.ramp_wall_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and self.ramp_wall_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
         ):
