@@ -43,13 +43,13 @@ class ArmyCommander:
         self.done : bool = False
         self.enemy_race : Race = enemy_race
         self.assigned_army = Units([], self.ramp_wall_bot)
-        self.assigned_army_tags = []
+        self.assigned_army_tags = set()
         self.mode = mode
         self.targets = None
         self.phase = None
         
     async def update_army(self):
-        self.assigned_army = []
+        self.assigned_army = Units([], self.ramp_wall_bot)
         for unit_tag in self.assigned_army_tags:
             unit = self.ramp_wall_bot.units.find_by_tag(unit_tag)
             if unit:
@@ -57,11 +57,12 @@ class ArmyCommander:
             else:
                 self.assigned_army_tags.remove(unit_tag)
         
-        for unit in self.assigned_army:
-            for unit_necessity in self.unity_necessities:
-                if unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] != "fill":
-                    unit_necessity["acquired"] += 1
-                    break
+        print("getting army")
+        print (self.assigned_army)
+        
+        for unit_necessity in self.unity_necessities:
+            unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId[unit_necessity["unit"]]).amount
+   
 
 
     async def run(self):
@@ -69,7 +70,7 @@ class ArmyCommander:
             bases = self.ramp_wall_bot.expansion_locations_list
             self.targets = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
         
-        self.update_army()
+        await self.update_army()
         await self.get_units()
         await self.act()
 
@@ -86,7 +87,7 @@ class ArmyCommander:
                     if unit.type_id.name == unit_necessity["unit"] and unit_necessity["amount"] != "fill":
                         if unit_necessity["acquired"] < unit_necessity["amount"]:
                             unit_necessity["acquired"] += 1
-                            self.assigned_army_tags.append(unit.tag)
+                            self.assigned_army_tags.add(unit.tag)
                             break
                         army.remove(unit)
                         break
@@ -97,7 +98,7 @@ class ArmyCommander:
                             if u:
                                 total_supply += self.ramp_wall_bot.calculate_supply_cost(u.type_id)
                         if total_supply < self.available_supply:
-                            self.assigned_army_tags.append(unit.tag)
+                            self.assigned_army_tags.add(unit.tag)
                             break
 
         
@@ -215,10 +216,6 @@ class ArmyCommander:
 
 
 
-
-
-
-
 Objectives = {
     "MainArmy" : {
         "MinSupply": 0,
@@ -232,9 +229,7 @@ Objectives = {
             {"unit" : "LIBERATOR", "amount": 2, "source": UnitTypeId.STARPORT},
             {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
             {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
-            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
-
-
+            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS}
         ],
         "rebuild" : True
     },
@@ -243,29 +238,30 @@ Objectives = {
         "army" : [
             {"unit": "CYCLONE", "amount": 2, "source": UnitTypeId.FACTORY},
             {"unit": "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
-            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT},
+            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT}
         ],
         "rebuild" : True
     },
     "ScoutHarass" : {
         "MinSupply": 9,
         "army" : [
-            {"unit": "HELLION", "amount": 2, "source": UnitTypeId.FACTORY},
+            
             {"unit": "REAPER", "amount": 3, "source": UnitTypeId.BARRACKS},
+            {"unit": "HELLION", "amount": 2, "source": UnitTypeId.FACTORY}
         ],
         "rebuild" : False
     },
     "PreventExpansion" : {
         "MinSupply": 4,
         "army" : [
-            {"unit": "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
+            {"unit": "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY}
         ],
         "rebuild" : False
     },
     "MapControl": {
         "MinSupply": 5,
         "army" : [
-            {"unit": "MARINE", "amount": 5, "source": UnitTypeId.BARRACKS},
+            {"unit": "MARINE", "amount": 5, "source": UnitTypeId.BARRACKS}
         ],
         "rebuild" : True
     }

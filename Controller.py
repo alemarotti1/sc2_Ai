@@ -241,13 +241,13 @@ class Controller(metaclass=abc.ABCMeta):
                 if unity["unit"] not in str(ability):
                     continue
                 if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                    structure.train(UnitTypeId[unity["unit"]])
+                    structure(ability)
 
                     if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
-                        structure.train(UnitTypeId[unity["unit"]])
+                        structure(ability)
     
     async def refresh_army_tag(self):
-        self.army_tag = { unit.tag: unit for unit in self.all_units }
+        self.army_tag = { unit.tag: unit for unit in self.bot.units }
  
 
 ########################################################################################################################
@@ -269,6 +269,7 @@ class TVZController(Controller):
         
 
     async def run(self, iteration):
+        await self.refresh_army_tag()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -279,7 +280,7 @@ class TVZController(Controller):
 
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
             self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            #self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
 
         if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
@@ -324,7 +325,7 @@ class TVPController(Controller):
         
 
     async def run(self, iteration):
-        self.refresh_army_tag()
+        await self.refresh_army_tag()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -336,11 +337,11 @@ class TVPController(Controller):
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
             self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
             self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            #self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             
             self.midgame_comanders_created = True
-        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
-            self.army_commanders[2].mode = "attack"
+        #if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+        #    self.army_commanders[2].mode = "attack"
 
     async def on_start(self):
         #self.army_commanders.append(ArmyCommander(self, "attack", [UnitTypeId.REAPER]))
@@ -377,7 +378,7 @@ class TVTController(Controller):
         
 
     async def run(self, iteration):
-        self.refresh_army_tag()
+        await self.refresh_army_tag()
         await self.find_threats()
         await self.buildingCommander.run()
         await self.assign_workers()
@@ -387,13 +388,13 @@ class TVTController(Controller):
             await army_commander.run()
 
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
-            self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
+            #self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
             self.army_commanders.append(ArmyCommander(self.bot, "ScoutHarass", Race.Protoss, mode="harass"))
-            self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
+            #self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
         
-        if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
-            self.army_commanders[2].mode = "attack"
+        # if self.bot.supply_army>90 and self.army_commanders[2].mode!="attack":
+        #     self.army_commanders[2].mode = "attack"
 
 
     async def on_start(self):
