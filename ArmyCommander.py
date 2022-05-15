@@ -46,6 +46,7 @@ class ArmyCommander:
         self.assigned_army_tags = []
         self.mode = mode
         self.targets = None
+        self.phase = None
         
     async def update_army(self):
         self.assigned_army = []
@@ -178,7 +179,7 @@ class ArmyCommander:
         
         hellions = self.assigned_army.of_type(UnitTypeId.HELLION)
         reapers = self.assigned_army.of_type(UnitTypeId.REAPER)
-        if self.phase=="defend" and not (hellion.amount == 2 and reaper.amount == 3):
+        if self.phase=="defend" and not (hellions.amount == 2 and reapers.amount == 3):
             return
         self.phase = "move"
         if self.phase == "move":

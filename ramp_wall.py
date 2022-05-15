@@ -227,7 +227,7 @@ def main():
             Bot(Race.Terran, RampWallBot()), 
             Computer(Race.Terran, difficulty=Difficulty.Easy)
         ],
-        realtime=True,
+        realtime=False,
         save_replay_as="replay"
         
         # sc2_version="4.10.1",

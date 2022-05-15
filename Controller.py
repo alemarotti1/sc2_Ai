@@ -219,7 +219,7 @@ class Controller(metaclass=abc.ABCMeta):
             needed_army = army_commander.unity_necessities
             fill : List[dict] = []
             for unity in needed_army:
-                if unity["amount"] is "fill":
+                if unity["amount"] == "fill":
                     fill.append(unity)
                     continue 
 
