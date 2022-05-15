@@ -129,7 +129,6 @@ class Controller(metaclass=abc.ABCMeta):
                     mineral_patch["worker"].remove(worker)
         return worker_necessities
 
-
     async def gathering_boost(self):
         for townhall in self.assigned_workers:
             for mineral_patch in townhall["patches"]["mineral"]:
@@ -140,8 +139,6 @@ class Controller(metaclass=abc.ABCMeta):
                         w.move(mineral_location, queue=True)
                         w.gather(mineral_patch["mineral"], queue=True)
                         w.return_resource(townhall, queue=True)
-
-        
 
     async def gathering_places(self):
         #get all the townhalls
@@ -212,7 +209,40 @@ class Controller(metaclass=abc.ABCMeta):
                 print(f"Threats found at {base.position}")
         self.threats = t
     
-        
+    async def produce_army(self):
+        for a in self.army_commanders:
+            army_commander : ArmyCommander = a
+            needed_army = army_commander.unity_necessities
+            fill : List[dict] = []
+            for unity in needed_army:
+                if unity["amount"] is "fill":
+                    fill.append(unity)
+                    continue 
+
+                if not unity["acquired"]<unity["amount"]:
+                    continue
+
+                if .expanded_times >= 2:
+                    await self.produce_unit(unity)
+                
+            for unit in fill:
+                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
+                    u = unit.copy()
+                    u["amount"] = u["acquired"]+1
+                    if BuildingCommander.expanded_times >= 2:
+                        await self.produce_unit(u)
+
+    async def produce_unit(self, unity):
+        for structure in self.bot.structures(unity["source"]).idle:
+            abilities = await self.bot.get_available_abilities(structure)
+            for ability in abilities:
+                if unity["unit"] not in str(ability):
+                    continue
+                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                    structure.train(UnitTypeId[unity["unit"]])
+
+                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                        structure.train(UnitTypeId[unity["unit"]])
 
 ########################################################################################################################
 
@@ -260,38 +290,6 @@ class TVZController(Controller):
     async def used_army(self) -> Units:
         return self.assigned_army
     
-    async def produce_army(self):
-        for a in self.army_commanders:
-            army_commander : ArmyCommander = a
-            needed_army = army_commander.unity_necessities
-            fill : List[dict] = []
-            for unity in needed_army:
-                if unity["amount"] is "fill":
-                    fill.append(unity)
-                    continue 
-
-                if not unity["acquired"]<unity["amount"]:
-                    continue
-                
-                await self.produce_unit(unity)
-                
-            for unit in fill:
-                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
-                    u = unit.copy()
-                    u["amount"] = u["acquired"]+1
-                    await self.produce_unit(u)
-
-    async def produce_unit(self, unity):
-        for structure in self.bot.structures(unity["source"]).idle:
-            abilities = await self.bot.get_available_abilities(structure)
-            for ability in abilities:
-                if unity["unit"] not in str(ability):
-                    continue
-                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                    structure.train(UnitTypeId[unity["unit"]])
-
-                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
-                        structure.train(UnitTypeId[unity["unit"]])
 
 
 
@@ -347,38 +345,7 @@ class TVPController(Controller):
     async def used_army(self) -> Units:
         return self.assigned_army
     
-    async def produce_army(self):
-        for a in self.army_commanders:
-            army_commander : ArmyCommander = a
-            needed_army = army_commander.unity_necessities
-            fill : List[dict] = []
-            for unity in needed_army:
-                if unity["amount"] is "fill":
-                    fill.append(unity)
-                    continue 
-
-                if not unity["acquired"]<unity["amount"]:
-                    continue
-                
-                await self.produce_unit(unity)
-                
-            for unit in fill:
-                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
-                    u = unit.copy()
-                    u["amount"] = u["acquired"]+1
-                    await self.produce_unit(u)
-
-    async def produce_unit(self, unity):
-        for structure in self.bot.structures(unity["source"]).idle:
-            abilities = await self.bot.get_available_abilities(structure)
-            for ability in abilities:
-                if unity["unit"] not in str(ability):
-                    continue
-                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                    structure.train(UnitTypeId[unity["unit"]])
-
-                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
-                        structure.train(UnitTypeId[unity["unit"]])
+    
 
 
 
@@ -431,38 +398,6 @@ class TVTController(Controller):
     async def used_army(self) -> Units:
         return self.assigned_army
     
-    async def produce_army(self):
-        for a in self.army_commanders:
-            army_commander : ArmyCommander = a
-            needed_army = army_commander.unity_necessities
-            fill : List[dict] = []
-            for unity in needed_army:
-                if unity["amount"] is "fill":
-                    fill.append(unity)
-                    continue 
-
-                if not unity["acquired"]<unity["amount"]:
-                    continue
-                
-                await self.produce_unit(unity)
-                
-            for unit in fill:
-                if self.bot.can_afford(UnitTypeId[unit["unit"]]):
-                    u = unit.copy()
-                    u["amount"] = u["acquired"]+1
-                    await self.produce_unit(u)
-
-    async def produce_unit(self, unity):
-        for structure in self.bot.structures(unity["source"]).idle:
-            abilities = await self.bot.get_available_abilities(structure)
-            for ability in abilities:
-                if unity["unit"] not in str(ability):
-                    continue
-                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                    structure.train(UnitTypeId[unity["unit"]])
-
-                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
-                        structure.train(UnitTypeId[unity["unit"]])
 
 
 

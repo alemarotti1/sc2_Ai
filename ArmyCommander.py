@@ -16,12 +16,13 @@ from sc2.bot_ai import BotAI
 from sc2.data import Difficulty, Race
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.ids.buff_id import BuffId
 from sc2.main import run_game
 from sc2.player import Bot, Computer
 from sc2.position import Point2, Point3
 from sc2.unit import Unit
 from sc2.units import Units
-from sqlalchemy import true
+import time
 
 
 if TYPE_CHECKING:
@@ -73,7 +74,7 @@ class ArmyCommander:
         
     
     def group(self, destination: Point2):
-        grouped = true
+        grouped = True
         army = [unit for unit in self.army]
         for unit in range(len(army)-1):
             if army[unit+1].distance_to(army[unit]) > 10:
@@ -167,10 +168,9 @@ class ArmyCommander:
         else:
             for unit in self.assigned_army:
                 pos = self.ramp_wall_bot.enemy_units.closest_to(unit).position
-                if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR]:
+                if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR, UnitTypeId.RAVEN]:
                     unit.attack(pos.towards(unit.position, max(unit.ground_range, unit.air_range)+0.5))
                 else:
-                    
                     if unit.type_id == UnitTypeId.SIEGETANK:
                         unit.move(pos.towards(unit.position,13))
                         unit(AbilityId.SIEGEMODE_SIEGEMODE, queue=True)
@@ -179,6 +179,17 @@ class ArmyCommander:
                     if unit.type_id == UnitTypeId.LIBERATOR:
                         print(await self.ramp_wall_bot.get_available_abilities(unit))
                         unit(AbilityId.LIBERATORMORPHTOAG_LIBERATORAGMODE, queue=True)
+                    if unit.type_id == UnitTypeId.RAVEN:
+                        for threat in threats:
+                            self.goalIt = self.ramp_wall_bot.iteration + 300
+                            if(self.ramp_wall_bot.iteration >= self.goalIt and not(threat.has_buff(BuffId.RAVENSHREDDERMISSILEARMORREDUCTION))):
+                                point = {"x": 0, "y": 0}
+                                point["x"] += threat.position.x
+                                point["y"] += threat.position.y
+                                available_abilities = await self.ramp_wall_bot.get_available_abilities(unit)
+                                if AbilityId.EFFECT_ANTIARMORMISSILE in available_abilities:
+                                    unit.move(pos.towards(Point2((point["x"], point["y"])),10))
+                                    unit(AbilityId.EFFECT_ANTIARMORMISSILE, queue=True)
                         
     
     async def harass(self):
@@ -198,7 +209,7 @@ class ArmyCommander:
     async def act(self):
         if self.mode == "attack":
             await self.attack()
-        elif self.mode == "defend" or true:
+        elif self.mode == "defend" or True:
             await self.defend()
         elif self.mode == "harass":
             await self.harass()

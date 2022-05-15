@@ -20,7 +20,6 @@ from sc2.player import Bot, Computer
 from sc2.position import Point2, Point3
 from sc2.unit import Unit
 from sc2.units import Units
-from sqlalchemy import false, true
 
 
 if TYPE_CHECKING:
