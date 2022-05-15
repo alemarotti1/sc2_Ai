@@ -49,6 +49,19 @@ class ArmyCommander:
         self.phase = None
         
     async def update_army(self):
+        # self.assigned_army = Units([], self.ramp_wall_bot)
+        # for unit_tag in self.assigned_army_tags.copy():
+        #     unit = self.ramp_wall_bot.units.find_by_tag(unit_tag)
+        #     if unit:
+        #         self.assigned_army.append(unit)
+        #     else:
+        #         self.assigned_army_tags.remove(unit_tag)
+        
+        # print("getting army")
+        # print (self.assigned_army)
+        
+        # for unit_necessity in self.unity_necessities:
+        #     unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId[unit_necessity["unit"]]).amount
         self.assigned_army = Units([], self.ramp_wall_bot)
         for unit_tag in self.assigned_army_tags.copy():
             unit = self.ramp_wall_bot.units.find_by_tag(unit_tag)
@@ -56,12 +69,6 @@ class ArmyCommander:
                 self.assigned_army.append(unit)
             else:
                 self.assigned_army_tags.remove(unit_tag)
-        
-        print("getting army")
-        print (self.assigned_army)
-        
-        for unit_necessity in self.unity_necessities:
-            unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId[unit_necessity["unit"]]).amount
    
 
 
@@ -77,27 +84,21 @@ class ArmyCommander:
         await self.act()
 
     async def get_units(self):
-        army =  await self.ramp_wall_bot.available_army()
+        if self.objective!="MainArmy":
+            return
+        army = await self.ramp_wall_bot.available_army()
+        
+        self.assigned_army_tags = set([unit.tag for unit in army])
 
-
-        for unit_necessity in self.unity_necessities:
-            if unit_necessity["acquired"] < unit_necessity["amount"]:
-                for unit in army:
-                    if unit.type_id == UnitTypeId[unit_necessity["unit"]]:
-                        self.assigned_army_tags.add(unit.tag)
-                        unit_necessity["acquired"] += 1
-                        army.remove(unit)
-                        break
 
 
         
     
-    def group(self, destination: Point2):
+    def group(self, units : Units, destination: Point2):
         grouped = True
-        army = [unit for unit in self.army]
-        for unit in range(len(army)-1):
-            if army[unit+1].distance_to(army[unit]) > 10:
-                army[unit+1].move(army[unit])
+        for unit in units:
+            if unit.distance_to(destination) > 10:
+                unit.move(destination, queue=True)
                 grouped = False
         
         return grouped
@@ -169,15 +170,33 @@ class ArmyCommander:
         
         hellions = self.assigned_army.of_type(UnitTypeId.HELLION)
         reapers = self.assigned_army.of_type(UnitTypeId.REAPER)
-        if self.phase=="defend" and not (hellions.amount == 2 and reapers.amount == 3):
-            return
-        self.phase = "move"
-        if self.phase == "move":
+        if self.phase=="defend" and (hellions.amount == 2 and reapers.amount == 3):
+            self.phase = "move"
+            
+        pos1 = self.targets[1].towards(self.ramp_wall_bot.start_location, 30)
+        pos2 = self.targets[5].towards(self.ramp_wall_bot.start_location, 5)
 
-            for hellion in hellions:
-                hellion.move(self.targets[1].towards(self.ramp_wall_bot.start_location, 30))
-            for reaper in reapers:
-                reaper.move(self.targets[0].towards(self.ramp_wall_bot.start_location, 30))
+
+        if self.phase == "move":
+            if self.group(hellions, pos1) and self.group(reapers,pos2):
+                self.phase = "harass"
+        
+        if self.phase == "harass":
+            if self.ramp_wall_bot.enemy_units.amount < 0:
+                for hellion in hellions:
+                    hellion.move(self.targets[1])
+                for reaper in reapers:
+                    reaper.move(self.targets[0])
+            else:
+                for hellion in hellions:
+                    enemy_units = self.ramp_wall_bot.enemy_units
+                    enemy_structures = self.ramp_wall_bot.enemy_structures
+                    #enemy units - enemy structures
+                    enemy_units_minus_structures = enemy_units - enemy_structures
+                    print(enemy_units_minus_structures)
+                    hellion.move(self.targets[1])
+                for reaper in reapers:
+                    reaper.move(self.targets[0])
         
         
     def mean_point(units: Units):
