@@ -75,13 +75,10 @@ class RampWallBot(BotAI):
         self.iteration = iteration
         await self.controller.run(iteration=iteration)
 
-        for towhhall in self.townhalls.idle: 
-            for mineral_patch in self.mineral_field.closer_than(10, towhhall):
-                if mineral_patch.surplus_harvesters < 0:
-                    self.produce_workers(towhhall)
-                    break
-
-
+        if self.units(UnitTypeId.SCV).amount < 50 or 22 * self.units(UnitTypeId.SCV).amount < self.townhalls.amount:
+            for townhall in self.townhalls.idle:
+                if self.can_afford(UnitTypeId.SCV):
+                    townhall.train(UnitTypeId.SCV)
 
         # Raise depos when enemies are nearby
         for depo in self.structures(UnitTypeId.SUPPLYDEPOT).ready:
@@ -115,10 +112,12 @@ class RampWallBot(BotAI):
         
 
     async def on_building_construction_started(self, unit: Unit):
-        print(f"Construction of building {unit} started at {unit.position}.")
+        pass
+        # print(f"Construction of building {unit} started at {unit.position}.")
 
     async def on_building_construction_complete(self, unit: Unit):
-        print(f"Construction of building {unit} completed at {unit.position}.")
+        pass
+        # print(f"Construction of building {unit} completed at {unit.position}.")
 
 
     def draw_facing_units(self):
