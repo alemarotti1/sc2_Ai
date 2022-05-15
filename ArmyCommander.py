@@ -1,4 +1,5 @@
 from __future__ import annotations
+from asyncio.windows_events import NULL
 from typing import Dict, List, Set, TYPE_CHECKING
 
 import string
@@ -133,7 +134,7 @@ class ArmyCommander:
             for unit in self.assigned_army:
                 if unit is not slower_unit:
                     if not unit.distance_to(base) <= 12:
-                        unit.attack(point, queue=True)
+                        unit.attack(Point2((point["x"], point["y"])), queue=True)
                     else:
                         unit.attack(base, queue=True)
         
@@ -165,7 +166,11 @@ class ArmyCommander:
                         unit(AbilityId.LIBERATORMORPHTOAG_LIBERATORAGMODE, queue=True)
         else:
             for unit in self.assigned_army:
-                pos = self.ramp_wall_bot.enemy_units.closest_to(unit).position
+                pos = 0
+                for enemy_unit in self.ramp_wall_bot.enemy_units:
+                    if pos == 0 or enemy_unit.distance_to(unit) <= enemy_unit.distance_to(pos):
+                        pos = enemy_unit.position
+
                 if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR, UnitTypeId.RAVEN]:
                     unit.attack(pos.towards(unit.position, max(unit.ground_range, unit.air_range)+0.5))
                 else:
