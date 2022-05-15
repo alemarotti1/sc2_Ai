@@ -76,9 +76,10 @@ class RampWallBot(BotAI):
         await self.controller.run(iteration=iteration)
 
         for towhhall in self.townhalls.idle: 
-            if towhhall.assigned_harvesters < 16:
-                if self.can_afford(UnitTypeId.SCV):
-                    towhhall.train(UnitTypeId.SCV)
+            for mineral_patch in self.mineral_field.closer_than(10, towhhall):
+                if mineral_patch.surplus_harvesters < 0:
+                    self.produce_workers(towhhall)
+                    break
 
 
 

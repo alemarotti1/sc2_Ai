@@ -203,7 +203,7 @@ class ArmyCommander:
     async def act(self):
         if self.mode == "attack":
             await self.attack()
-        elif self.mode == "defend" or True:
+        elif self.mode == "defend":
             await self.defend()
         elif self.mode == "harass":
             await self.harass()
