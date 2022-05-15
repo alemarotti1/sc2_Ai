@@ -60,8 +60,6 @@ class ArmyCommander:
         # print("getting army")
         # print (self.assigned_army)
         
-        # for unit_necessity in self.unity_necessities:
-        #     unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId[unit_necessity["unit"]]).amount
         self.assigned_army = Units([], self.ramp_wall_bot)
         for unit_tag in self.assigned_army_tags.copy():
             unit = self.ramp_wall_bot.units.find_by_tag(unit_tag)
@@ -69,6 +67,17 @@ class ArmyCommander:
                 self.assigned_army.append(unit)
             else:
                 self.assigned_army_tags.remove(unit_tag)
+
+        print(self.assigned_army)
+        for unit_necessity in self.unity_necessities:
+            if UnitTypeId[unit_necessity["unit"]] == UnitTypeId.WIDOWMINE:
+                unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId.WIDOWMINE).amount + self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED).amount
+            if UnitTypeId[unit_necessity["unit"]] == UnitTypeId.SIEGETANK:
+                unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId.SIEGETANK).amount + self.assigned_army.of_type(UnitTypeId.SIEGETANKSIEGED).amount
+            else:
+                unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId[unit_necessity["unit"]]).amount
+        
+        print (self.unity_necessities)
    
 
 
@@ -118,22 +127,30 @@ class ArmyCommander:
         bases = self.ramp_wall_bot.expansion_locations_list
         bases = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
         
-        def unit_velocity(unit: Unit):
-            return unit.movement_speed
+        pos = []
+        if self.ramp_wall_bot.enemy_structures.amount !=0:
+            for structure in self.ramp_wall_bot.enemy_structures:
+                pos.append(structure.position)
 
         sorted_units = self.assigned_army.copy()
-        sorted_units.sort(key = unit_velocity)
+        sorted_units.sort(key = lambda u: u.movement_speed)
         slower_unit: Unit = sorted_units[0]
         point = {"x": 0, "y": 0}
         point["x"] += slower_unit.position.x
         point["y"] += slower_unit.position.y
+
+        if len(pos) > 0:
+            slower_unit.attack(base, queue=True)
+            for unit in self.assigned_army:
+                if unit is not slower_unit:
+                    unit.attack(point)
 
         for base in bases:
             slower_unit.attack(base, queue=True)
             for unit in self.assigned_army:
                 if unit is not slower_unit:
                     if not unit.distance_to(base) <= 12:
-                        unit.attack(point, queue=True)
+                        unit.attack(point)
                     else:
                         unit.attack(base, queue=True)
         
@@ -252,7 +269,7 @@ class ArmyCommander:
 
 Objectives = {
     "MainArmy" : {
-        "MinSupply": 0,
+        "MinSupply": 200,
         "army" : [
             {"unit" : "SIEGETANK", "amount": 3, "source": UnitTypeId.FACTORY},
             {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
@@ -263,7 +280,8 @@ Objectives = {
             {"unit" : "LIBERATOR", "amount": 2, "source": UnitTypeId.STARPORT},
             {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
             {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
-            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS}
+            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
+            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT}
         ],
         "rebuild" : True
     },

@@ -331,7 +331,6 @@ class TVPController(Controller):
             await army_commander.run()
 
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
-            self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
             self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             
             self.midgame_comanders_created = True
@@ -381,7 +380,6 @@ class TVTController(Controller):
             await army_commander.run()
 
         if self.buildingCommander.objective == "midgame" and not self.midgame_comanders_created:
-            self.army_commanders.append(ArmyCommander(self.bot, "AntiAir", Race.Protoss, mode="defend"))
             self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
         
