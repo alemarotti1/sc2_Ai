@@ -78,8 +78,7 @@ class ArmyCommander:
             else:
                 unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId[unit_necessity["unit"]]).amount
         
-        print (self.unity_necessities)
-   
+        
 
 
     async def run(self):
@@ -115,19 +114,35 @@ class ArmyCommander:
         
     
     def group(self, units : Units, destination: Point2):
-        grouped = True
+        not_grouped = 0
         for unit in units:
-            if unit.distance_to(destination) > 10:
-                unit.move(destination, queue=True)
-                grouped = False
+            if unit.distance_to(destination) > 20:
+                unit.attack(destination, queue=True)
+                not_grouped += 1
         
-        return grouped
+        return not_grouped< units.amount/10
 
     
     async def attack(self):
-        bases = self.ramp_wall_bot.expansion_locations_list
-        bases = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
-        
+        if not self.phase:
+            self.phase = "-1"
+
+        if self.assigned_army.amount == 0:
+            return
+        center = self.assigned_army.center
+        if self.ramp_wall_bot.enemy_units.closer_than(20, center).amount > 5:
+            for tank in self.assigned_army.of_type(UnitTypeId.SIEGETANK):
+                tank(AbilityId.SIEGEMODE_SIEGEMODE)
+            for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINE):
+                wm(AbilityId.BURROWDOWN_WIDOWMINE)
+        else:
+            for tank in self.assigned_army.of_type(UnitTypeId.SIEGETANKSIEGED):
+                tank(AbilityId.UNSIEGE_UNSIEGE)
+            for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED):
+                wm(AbilityId.BURROWUP_WIDOWMINE)
+
+
+
         pos = []
         if self.ramp_wall_bot.enemy_structures.amount !=0:
             for structure in self.ramp_wall_bot.enemy_structures:
@@ -136,15 +151,26 @@ class ArmyCommander:
         sorted_units = self.assigned_army.copy()
         sorted_units.sort(key = lambda u: u.movement_speed)
         slower_unit: Unit = sorted_units[0]
-        point = {"x": 0, "y": 0}
-        point["x"] += slower_unit.position.x
-        point["y"] += slower_unit.position.y
+        point = slower_unit.position
 
-
-        for base in bases:
-            slower_unit.attack(base, queue=True)
+        if len(pos) > 0:
             for unit in self.assigned_army:
-                unit.attack(base, queue=True)
+                if unit is not slower_unit:
+                    for p in pos:
+                        unit.attack(p, queue=True)
+
+        else:
+            if self.phase == "-1" or self.phase == len(self.targets):
+                if self.group(self.assigned_army, self.ramp_wall_bot.enemy_start_locations[0].towards(self.ramp_wall_bot.start_location, 50)):
+                    self.phase = "0"
+            else:
+                if self.group(self.assigned_army, self.targets[int(self.phase)]):
+                    self.phase = str(int(self.phase) + 1)
+
+        
+        u = self.assigned_army.furthest_to(point)
+        if u.distance_to(point) > 10:
+            u.move(point.position)
         
 
 
@@ -174,10 +200,8 @@ class ArmyCommander:
                         unit(AbilityId.LIBERATORMORPHTOAG_LIBERATORAGMODE, queue=True)
         else:
             for unit in self.assigned_army:
-                pos = 0
-                for enemy_unit in self.ramp_wall_bot.enemy_units:
-                    if pos == 0 or enemy_unit.distance_to(unit) <= enemy_unit.distance_to(pos):
-                        pos = enemy_unit.position
+                if unit:
+                    pos = self.ramp_wall_bot.enemy_units.random.position
 
                 if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR, UnitTypeId.RAVEN]:
                     unit.attack(pos.towards(unit.position, max(unit.ground_range, unit.air_range)+0.5))
@@ -268,6 +292,7 @@ Objectives = {
         "MinSupply": 200,
         "army" : [
             {"unit" : "SIEGETANK", "amount": 3, "source": UnitTypeId.FACTORY},
+            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
             {"unit" : "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
             {"unit" : "MARINE", "amount": 15, "source": UnitTypeId.BARRACKS},
             {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
