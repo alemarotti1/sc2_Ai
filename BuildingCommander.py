@@ -182,7 +182,7 @@ class BuildingCommander:
                 for oc in self.ramp_wall_bot.townhalls(UnitTypeId.ORBITALCOMMAND):
                     if oc.energy >= 50:
                         oc(AbilityId.SCANNERSWEEP_SCAN, closest_expansion_point)
-                            break
+                        break
 
 
                 self.builder.build(UnitTypeId.COMMANDCENTER, closest_expansion_point, queue=True)
