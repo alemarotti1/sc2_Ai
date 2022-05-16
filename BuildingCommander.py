@@ -159,19 +159,19 @@ class BuildingCommander:
             return
         
     async def midgame(self):
-        if self.enemy_race is Race.Terran:
-            await self.midgame_terran()
-        elif self.enemy_race is Race.Protoss:
-            await self.midgame_protoss()
-        elif self.enemy_race is Race.Zerg:
-            await self.midgame_zerg()
-        else:
-            raise Exception("error at identifying enemy race")
-         
-    
-
-
-    async def midgame_terran(self):
+        
+        if (self.ramp_wall_bot.supply_left < 20 and self.ramp_wall_bot.townhalls and self.ramp_wall_bot.supply_used >= 20
+            and self.ramp_wall_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and self.ramp_wall_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
+        ):
+            workers: Units = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+            # If workers were found
+            if workers:
+                worker: Unit = workers.furthest_to(workers.center)
+                location: Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.SUPPLYDEPOT, worker.position, placement_step=3)
+                # If a placement location was found
+                if location:
+                    # Order worker to build exactly on that location
+                    worker.build(UnitTypeId.SUPPLYDEPOT, location)
 
         if self.step == 0:
             if self.ramp_wall_bot.can_afford(UnitTypeId.COMMANDCENTER):
@@ -323,7 +323,7 @@ class BuildingCommander:
 
             if self.enemy_race == Race.Protoss and self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount > 0:
                 if self.ramp_wall_bot.minerals > 300 and self.ramp_wall_bot.vespene > 300:
-                    self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount(AbilityId.GHOSTACADEMYRESEARCH_RESEARCHENHANCEDSHOCKWAVES)
+                    self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).first(AbilityId.GHOSTACADEMYRESEARCH_RESEARCHENHANCEDSHOCKWAVES)
 
             if self.step == 4 and self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount != 0:
                 self.step += 1
@@ -378,7 +378,7 @@ class BuildingCommander:
                         if self.ramp_wall_bot.minerals > 300 and self.ramp_wall_bot.vespene > 300:
                             avaliable: List[AbilityId] = await self.ramp_wall_bot.get_available_abilities(self.ramp_wall_bot.structures(building).first)
                             if ability in avaliable:
-                                self.ramp_wall_bot.structures(building).first(ability)
+                                self.ramp_wall_bot.structures(building).idle.first(ability)
                                 break
 
             if self.ramp_wall_bot.structures(UnitTypeId.ENGINEERINGBAY).amount > 0 and \
@@ -464,29 +464,6 @@ class BuildingCommander:
                             #build a refinery
                             if worker:
                                 worker.build(UnitTypeId.REFINERY, target_gas, queue=True)
-        
-
-        if (self.ramp_wall_bot.supply_left < 20 and self.ramp_wall_bot.townhalls and self.ramp_wall_bot.supply_used >= 20
-            and self.ramp_wall_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and self.ramp_wall_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
-        ):
-            workers: Units = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-            # If workers were found
-            if workers:
-                worker: Unit = workers.furthest_to(workers.center)
-                location: Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.SUPPLYDEPOT, worker.position, placement_step=3)
-                # If a placement location was found
-                if location:
-                    # Order worker to build exactly on that location
-                    worker.build(UnitTypeId.SUPPLYDEPOT, location)
-        
-
-
-
-    midgame_protoss = midgame_terran
-    
-    midgame_zerg = midgame_protoss 
-
-
 
 
     def scout_pos(self):
