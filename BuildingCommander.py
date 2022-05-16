@@ -179,6 +179,12 @@ class BuildingCommander:
                 sorted_expansion_points = sorted(expansion_points, key=lambda p: p.distance_to(self.ramp_wall_bot.townhalls.first))
                 closest_expansion_point = sorted_expansion_points[self.expanded_times]
 
+                for oc in self.ramp_wall_bot.townhalls(UnitTypeId.ORBITALCOMMAND):
+                    if oc.energy >= 50:
+                        oc(AbilityId.SCANNERSWEEP_SCAN, closest_expansion_point)
+                            break
+
+
                 self.builder.build(UnitTypeId.COMMANDCENTER, closest_expansion_point, queue=True)
                 self.expand_locations.append(closest_expansion_point)
                 self.expanded_times += 1
@@ -298,6 +304,11 @@ class BuildingCommander:
                 if self.ramp_wall_bot.can_afford(UnitTypeId.COMMANDCENTER):
                     closest_expansion_point = sorted_expansion_points[self.expanded_times]
                     builders = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_minerals and not unit.is_constructing_scv)
+
+                    for oc in self.ramp_wall_bot.townhalls(UnitTypeId.ORBITALCOMMAND):
+                        if oc.energy >= 50:
+                            oc(AbilityId.SCANNERSWEEP_SCAN, closest_expansion_point)
+                            break
 
                     self.builder = builders.closest_to(closest_expansion_point)
 
