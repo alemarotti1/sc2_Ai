@@ -35,14 +35,25 @@ if TYPE_CHECKING:
 class ArmyCommander:
     action = {}
     def __init__(self, ramp_wall_bot : RampWallBot, objective : str, enemy_race : Race, mode : str):
+        self.enemy_race : Race = enemy_race
         self.ramp_wall_bot :RampWallBot = ramp_wall_bot
         self.objective : str  = objective
-        self.available_supply = Objectives[objective]["MinSupply"]
-        self.unity_necessities : List[UnitTypeId] = Objectives[objective]["army"]
+        if self.enemy_race not in [Race.Terran, Race.Protoss, Race.Zerg]:
+            self.available_supply = Objectives[objective]["MinSupply"]
+            self.unity_necessities : List[UnitTypeId] = Objectives[objective]["army"]
+        elif self.enemy_race == Race.Terran:
+            self.available_supply = Objectives_Terran[objective]["MinSupply"]
+            self.unity_necessities : List[UnitTypeId] = Objectives_Terran[objective]["army"]
+        elif self.enemy_race == Race.Zerg:
+            self.available_supply = Objectives_Zerg[objective]["MinSupply"]
+            self.unity_necessities : List[UnitTypeId] = Objectives_Zerg[objective]["army"]
+        elif self.enemy_race == Race.Protoss:
+            self.available_supply = Objectives_Protoss[objective]["MinSupply"]
+            self.unity_necessities : List[UnitTypeId] = Objectives_Protoss[objective]["army"]
+        
         for unit in self.unity_necessities:
             unit["acquired"] = 0
         self.done : bool = False
-        self.enemy_race : Race = enemy_race
         self.assigned_army = Units([], self.ramp_wall_bot)
         self.assigned_army_tags = set()
         self.mode = mode
@@ -69,10 +80,11 @@ class ArmyCommander:
             else:
                 self.assigned_army_tags.remove(unit_tag)
 
-        print(self.assigned_army)
         for unit_necessity in self.unity_necessities:
             if UnitTypeId[unit_necessity["unit"]] == UnitTypeId.WIDOWMINE:
                 unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId.WIDOWMINE).amount + self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED).amount
+                print(unit_necessity["acquired"])
+
             if UnitTypeId[unit_necessity["unit"]] == UnitTypeId.SIEGETANK:
                 unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId.SIEGETANK).amount + self.assigned_army.of_type(UnitTypeId.SIEGETANKSIEGED).amount
             else:
@@ -98,7 +110,7 @@ class ArmyCommander:
         army = await self.ramp_wall_bot.available_army()
         
         self.assigned_army_tags = set([unit.tag for unit in army])
-
+        return
         for unit_necessity in self.unity_necessities:
             if unit_necessity["amount"]=="fill":
                 return
@@ -129,8 +141,8 @@ class ArmyCommander:
 
         if self.assigned_army.amount == 0:
             return
-        center = self.assigned_army.center
-        if self.ramp_wall_bot.enemy_units.closer_than(20, center).amount > 5:
+        center = self.mean_point(self.assigned_army)
+        if self.ramp_wall_bot.enemy_units.closer_than(20, center).amount > 3:
             for tank in self.assigned_army.of_type(UnitTypeId.SIEGETANK):
                 tank(AbilityId.SIEGEMODE_SIEGEMODE)
             for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINE):
@@ -140,24 +152,22 @@ class ArmyCommander:
                 tank(AbilityId.UNSIEGE_UNSIEGE)
             for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED):
                 wm(AbilityId.BURROWUP_WIDOWMINE)
+            
 
 
-
-        pos = []
+        pos = Units([], self.ramp_wall_bot)
         if self.ramp_wall_bot.enemy_structures.amount !=0:
             for structure in self.ramp_wall_bot.enemy_structures:
                 pos.append(structure.position)
+                pos.sort(key=lambda x: x.distance_to(center))
 
-        sorted_units = self.assigned_army.copy()
-        sorted_units.sort(key = lambda u: u.movement_speed)
-        slower_unit: Unit = sorted_units[0]
-        point = slower_unit.position
+
+        point = center
 
         if len(pos) > 0:
             for unit in self.assigned_army:
-                if unit is not slower_unit:
-                    for p in pos:
-                        unit.attack(p, queue=True)
+                if pos[0]:
+                    unit.attack(pos[0])
 
         else:
             if self.phase == "-1" or self.phase == len(self.targets):
@@ -262,16 +272,18 @@ class ArmyCommander:
                     reaper.move(self.targets[0])
         
         
-    def mean_point(units: Units):
+    def mean_point(self, units: Units):
         point = {"x": 0, "y": 0}
         total = 0
         for unit in units:
-            point["x"] += unit.position.x
-            point["y"] += unit.position.y
-            total += 1
-        point["x"] = point["x"]/total
-        point["y"] = point["y"]/total
-        return Point2((point["x"], point["y"]))
+            if unit:
+                point["x"] += unit.position.x
+                point["y"] += unit.position.y
+                total += 1
+        if total == 0:
+            return Point2((0,0))
+        
+        return Point2((point["x"]/total, point["y"]/total))
     
     async def act(self):
         if self.mode == "attack":
@@ -285,6 +297,67 @@ class ArmyCommander:
 
 
 
+Objectives_Protoss = {
+    "MainArmy" : {
+        "MinSupply": 200,
+        "army" : [
+            {"unit" : "SIEGETANK", "amount": 3, "source": UnitTypeId.FACTORY},
+            {"unit" : "RAVEN", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "MARINE", "amount": 20, "source": UnitTypeId.BARRACKS},
+            {"unit" : "GHOST", "amount": 10, "source": UnitTypeId.BARRACKS},
+            {"unit" : "MEDIVAC", "amount": 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "LIBERATOR", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "THOR", "amount" : 3, "source": UnitTypeId.FACTORY},
+            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
+            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT},
+            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY}
+        ],
+        "rebuild" : True
+    }
+}
+
+Objectives_Terran = {
+    "MainArmy" : {
+        "MinSupply": 200,
+        "army" : [
+            {"unit" : "SIEGETANK", "amount": 5, "source": UnitTypeId.FACTORY},
+            {"unit" : "THOR", "amount" : 3, "source": UnitTypeId.FACTORY},
+            {"unit" : "RAVEN", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "MARINE", "amount": 15, "source": UnitTypeId.BARRACKS},
+            {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
+            {"unit" : "MEDIVAC", "amount": 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "LIBERATOR", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
+            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT},
+            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY}
+        ],
+        "rebuild" : True
+    }
+}
+
+Objectives_Zerg = {
+    "MainArmy" : {
+        "MinSupply": 200,
+        "army" : [
+            {"unit" : "SIEGETANK", "amount": 5, "source": UnitTypeId.FACTORY},
+            {"unit" : "THOR", "amount" : 3, "source": UnitTypeId.FACTORY},
+            {"unit" : "RAVEN", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "MARINE", "amount": 15, "source": UnitTypeId.BARRACKS},
+            {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
+            {"unit" : "MEDIVAC", "amount": 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "LIBERATOR", "amount": 2, "source": UnitTypeId.STARPORT},
+            {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
+            {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
+            {"unit": "VIKINGFIGHTER", "amount": "6", "source": UnitTypeId.STARPORT},
+            {"unit": "THOR", "amount": "fill", "source": UnitTypeId.STARPORT},
+            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY}
+        ],
+        "rebuild" : True
+    }
+}
+
 
 
 Objectives = {
@@ -292,8 +365,7 @@ Objectives = {
         "MinSupply": 200,
         "army" : [
             {"unit" : "SIEGETANK", "amount": 3, "source": UnitTypeId.FACTORY},
-            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY},
-            {"unit" : "RAVEN", "amount": 1, "source": UnitTypeId.STARPORT},
+            {"unit" : "RAVEN", "amount": 2, "source": UnitTypeId.STARPORT},
             {"unit" : "MARINE", "amount": 15, "source": UnitTypeId.BARRACKS},
             {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
             {"unit" : "MEDIVAC", "amount": 2, "source": UnitTypeId.STARPORT},
@@ -301,7 +373,8 @@ Objectives = {
             {"unit" : "BATTLECRUISER", "amount" : 3, "source": UnitTypeId.STARPORT},
             {"unit" : "GHOST", "amount": 5, "source": UnitTypeId.BARRACKS},
             {"unit" : "MARINE", "amount": "fill", "source": UnitTypeId.BARRACKS},
-            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT}
+            {"unit": "VIKINGFIGHTER", "amount": "fill", "source": UnitTypeId.STARPORT},
+            {"unit" : "WIDOWMINE", "amount": 2, "source": UnitTypeId.FACTORY}
         ],
         "rebuild" : True
     },
