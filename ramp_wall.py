@@ -224,7 +224,7 @@ def main():
         maps.get(map),
         [
             Bot(Race.Terran, RampWallBot()), 
-            Computer(Race.Terran, difficulty=Difficulty.Easy)
+            Computer(Race.Terran, difficulty=Difficulty.Hard)
         ],
         realtime=False,
         save_replay_as="replay"

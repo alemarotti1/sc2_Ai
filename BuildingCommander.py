@@ -326,7 +326,14 @@ class BuildingCommander:
                         worker = workers.closest_to(position)
                         if worker:
                             worker.build(UnitTypeId.GHOSTACADEMY, position)
+
+            if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle) > 0:
+                if self.ramp_wall_bot.minerals > 100 and self.ramp_wall_bot.vespene > 100:
+                    self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle.first(AbilityId.RESEARCH_DRILLINGCLAWS)
             
+            if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle) > 0:
+                if self.ramp_wall_bot.minerals > 100 and self.ramp_wall_bot.vespene > 100:
+                    self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle.first(AbilityId.RESEARCH_SMARTSERVOS)
 
             if self.enemy_race == Race.Protoss and self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount > 0:
                 if self.ramp_wall_bot.minerals > 300 and self.ramp_wall_bot.vespene > 300:

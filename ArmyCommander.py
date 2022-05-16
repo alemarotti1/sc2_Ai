@@ -196,7 +196,7 @@ class ArmyCommander:
                 else:
                     
                     if unit.type_id == UnitTypeId.WIDOWMINE:
-                        unit.move(closest_th.towards_with_random_angle(self.ramp_wall_bot.enemy_start_locations[0], 20))
+                        unit.move(closest_th.towards_with_random_angle(self.ramp_wall_bot.enemy_start_locations[0], 25))
                         unit(AbilityId.BURROWDOWN_WIDOWMINE, queue=True)
                         return
 
