@@ -181,8 +181,6 @@ class BuildingCommander:
                 self.expanded_times += 1
                 self.step += 1
 
-        print(self.step)
-
         if self.step >= 1:
             end = True
 
