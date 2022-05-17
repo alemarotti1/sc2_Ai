@@ -95,15 +95,18 @@ class ArmyCommander:
 
 
     async def run(self):
-        if self.targets is None:
-            bases = self.ramp_wall_bot.expansion_locations_list
-            self.targets = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
-        
-        
-        if self.ramp_wall_bot.iteration % 10 != 0:    
-            await self.get_units()
-            await self.update_army()
-        await self.act()
+        try:
+            if self.targets is None:
+                bases = self.ramp_wall_bot.expansion_locations_list
+                self.targets = sorted(bases, key=lambda x: x.distance_to(self.ramp_wall_bot.start_location), reverse=True)
+            
+            
+            if self.ramp_wall_bot.iteration % 10 != 0:    
+                await self.get_units()
+                await self.update_army()
+            await self.act()
+        except Exception as e:
+            pass
 
     async def get_units(self):
         if self.objective!="MainArmy":
@@ -130,10 +133,22 @@ class ArmyCommander:
         not_grouped = 0
         for unit in units:
             if unit.distance_to(destination) > 20:
-                unit.attack(destination, queue=True)
+                if unit.type_id not in [UnitTypeId.RAVEN, UnitTypeId.MEDIVAC]:
+                    unit.attack(destination, queue=True)
+                elif unit.type_id == UnitTypeId.MEDIVAC:
+                    unit.move(destination.towards(self.ramp_wall_bot.start_location, 10))
+                elif unit.type_id == UnitTypeId.RAVEN:
+                    unit.move(destination.towards(self.ramp_wall_bot.start_location, 10), queue=True)
+                    enemy = self.ramp_wall_bot.enemy_units.closer_than(13, unit.position)
+                    if not enemy:
+                        pass
+                    if enemy.amount > 3:
+                        unit(AbilityId.EFFECT_ANTIARMORMISSILE, enemy.random )
+
+                
                 not_grouped += 1
-        
-        return not_grouped< units.amount/20
+            
+        return not_grouped< units.amount/5
 
     
     async def attack(self):
@@ -149,7 +164,7 @@ class ArmyCommander:
             for tank in self.assigned_army.of_type(UnitTypeId.SIEGETANK):
                 tank(AbilityId.SIEGEMODE_SIEGEMODE)
             for liberator in self.assigned_army.of_type(UnitTypeId.LIBERATOR):
-                liberator(AbilityId.MORPH_LIBERATORAGMODE)
+                liberator(AbilityId.LIBERATORMORPHTOAG_LIBERATORAGMODE)
 
 
         if close_units.closer_than(5, center).amount > 3:
@@ -161,7 +176,7 @@ class ArmyCommander:
             for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED):
                 wm(AbilityId.BURROWUP_WIDOWMINE)
             for liberator in self.assigned_army.of_type(UnitTypeId.LIBERATORAG):
-                liberator(AbilityId.MORPH_LIBERATORAAMODE)
+                liberator(AbilityId.LIBERATORMORPHTOAA_LIBERATORAAMODE)
         
         if close_units.amount > 0:
             vikings = self.assigned_army.of_type(set([UnitTypeId.VIKINGFIGHTER, UnitTypeId.VIKINGASSAULT]))
@@ -229,10 +244,11 @@ class ArmyCommander:
 
     async def defend(self):
         threats = self.ramp_wall_bot.enemy_units
+        closest_th : Point2 = self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position
         if not threats:
             if not self.ramp_wall_bot.townhalls:
                 return
-            closest_th : Point2 = self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position
+            
             for unit in self.assigned_army:
                 if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR]:
                     unit.attack(closest_th.towards(self.targets[0], 13))
@@ -254,8 +270,10 @@ class ArmyCommander:
         else:
             for unit in self.assigned_army:
                 if unit:
-                    pos = self.ramp_wall_bot.enemy_units.random.position
+                    pos : Point2 = self.ramp_wall_bot.enemy_units.random.position
 
+                if pos.distance_to(closest_th) > 40:
+                    return
                 if unit.type_id not in [UnitTypeId.WIDOWMINE, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.LIBERATOR, UnitTypeId.RAVEN]:
                     unit.attack(pos.towards(unit.position, max(unit.ground_range, unit.air_range)+0.5))
                 else:

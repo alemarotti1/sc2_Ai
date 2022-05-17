@@ -44,26 +44,35 @@ class RampWallBot(BotAI):
     controller : Controller = None
 
     async def on_start(self):
-        await self.chat_send("(glhf)")
-        #get the enemy race
-        er = self.enemy_race
-        if er == Race.Zerg:
-            self.controller = TVZController(self)
-        elif er == Race.Terran:
-            self.controller = TVTController(self)
-        elif er == Race.Protoss:
-            self.controller = TVPController(self)
-        else:
-            self.controller = RandomController(self)
-        
-        self.controller.on_start()
+        try:
+            await self.chat_send("(glhf)")
+            #get the enemy race
+            er = self.enemy_race
+            if er == Race.Zerg:
+                self.controller = TVZController(self)
+            elif er == Race.Terran:
+                self.controller = TVTController(self)
+            elif er == Race.Protoss:
+                self.controller = TVPController(self)
+            else:
+                self.controller = RandomController(self)
+            
+            self.controller.on_start()
+        except Exception as e:
+            pass
 
     async def on_unit_created(self, unit: Unit):
-        await self.controller.on_unit_created(unit)
+        try:
+            await self.controller.on_unit_created(unit)
+        except Exception as e:
+            pass
+
     
     async def on_building_construction_complete(self, unit: Unit):
-        self.controller.on_building_construction_complete(unit)
-
+        try:
+            self.controller.on_building_construction_complete(unit)
+        except Exception as e:
+            pass
     async def on_step(self, iteration):
         # try:
         #     self.iteration = iteration
@@ -71,30 +80,32 @@ class RampWallBot(BotAI):
         # except Exception as e:
         #     pass
 
-        
-        self.iteration = iteration
-        await self.controller.run(iteration=iteration)
+        try:
+            self.iteration = iteration
+            await self.controller.run(iteration=iteration)
 
-        if self.units(UnitTypeId.SCV).amount < 50 or 22 * self.units(UnitTypeId.SCV).amount < self.townhalls.amount:
-            for townhall in self.townhalls.idle:
-                if self.can_afford(UnitTypeId.SCV):
-                    townhall.train(UnitTypeId.SCV)
+            if self.units(UnitTypeId.SCV).amount < 50 or 22 * self.units(UnitTypeId.SCV).amount < self.townhalls.amount:
+                for townhall in self.townhalls.idle:
+                    if self.can_afford(UnitTypeId.SCV):
+                        townhall.train(UnitTypeId.SCV)
 
-        # Raise depos when enemies are nearby
-        for depo in self.structures(UnitTypeId.SUPPLYDEPOT).ready:
-            for unit in self.enemy_units:
-                if unit.distance_to(depo) < 15:
-                    break
-            else:
-                depo(AbilityId.MORPH_SUPPLYDEPOT_LOWER)
+            # Raise depos when enemies are nearby
+            for depo in self.structures(UnitTypeId.SUPPLYDEPOT).ready:
+                for unit in self.enemy_units:
+                    if unit.distance_to(depo) < 15:
+                        break
+                else:
+                    depo(AbilityId.MORPH_SUPPLYDEPOT_LOWER)
 
-        # Lower depos when no enemies are nearby
-        for depo in self.structures(UnitTypeId.SUPPLYDEPOTLOWERED).ready:
-            for unit in self.enemy_units:
-                if unit.distance_to(depo) < 10:
-                    depo(AbilityId.MORPH_SUPPLYDEPOT_RAISE)
-                    break
-
+            # Lower depos when no enemies are nearby
+            for depo in self.structures(UnitTypeId.SUPPLYDEPOTLOWERED).ready:
+                for unit in self.enemy_units:
+                    if unit.distance_to(depo) < 10:
+                        depo(AbilityId.MORPH_SUPPLYDEPOT_RAISE)
+                        break
+        except Exception as e:
+            print(e)
+            pass
 
         # barracks_placement_position: Point2 = self.main_base_ramp.barracks_correct_placement
 
@@ -105,8 +116,10 @@ class RampWallBot(BotAI):
 
 
     def get_threats(self):
-        return self.controller.threats
-
+        try:
+            return self.controller.threats
+        except:
+            return Units([], self)
         
         
         
@@ -127,65 +140,78 @@ class RampWallBot(BotAI):
 
     def get_idle_workers(self):
         """ Returns a list of workers that are not carrying anything """
-        return [unit for unit in self.workers.idle]
-
+        try:
+            return [unit for unit in self.workers.idle]
+        except Exception as e:
+            return []
 
     def add_worker(self, worker: Unit, target: Unit):
         """ Adds a worker to a building """
-        for townhall in self.controller.assigned_workers:
-            for mineral_patch in townhall["patches"]["mineral"]:
-                if mineral_patch == target:
-                    townhall["workers"].append(worker)
-                    return True
-            for gas_patch in townhall["patches"]["gas"]:
-                if gas_patch == target:
-                    townhall["workers"].append(worker)
-                    return True
-        return False
+        try:
+            for townhall in self.controller.assigned_workers:
+                for mineral_patch in townhall["patches"]["mineral"]:
+                    if mineral_patch == target:
+                        townhall["workers"].append(worker)
+                        return True
+                for gas_patch in townhall["patches"]["gas"]:
+                    if gas_patch == target:
+                        townhall["workers"].append(worker)
+                        return True
+            return False
+        except Exception as e:
+            return False
     
     async def remove_worker(self, worker: Unit):
-        await self.controller.remove_worker(worker)
-    
+        try:
+            await self.controller.remove_worker(worker)
+        except Exception as e:
+            pass
     def produce_workers(self, townhall: Unit):
         """ Produce a worker if not already producing"""
-        if townhall.is_active:
+        try:
+            if townhall.is_active:
+                return False
+            #check if townhall has enough minerals to produce a worker
+            if self.minerals > 50:
+                townhall.train(UnitTypeId.SCV)
+                return True
             return False
-        #check if townhall has enough minerals to produce a worker
-        if self.minerals > 50:
-            townhall.train(UnitTypeId.SCV)
-            return True
-        return False
+        except:
+            return False
 
     def worker_sauration(self):
-        #check if every mining place is saturated
-        mining_place = (self.townhalls.ready)|(self.gas_buildings.ready)
-        surplus_workers = [place.surplus_harvesters for place in mining_place]
+        try:
+            #check if every mining place is saturated
+            mining_place = (self.townhalls.ready)|(self.gas_buildings.ready)
+            surplus_workers = [place.surplus_harvesters for place in mining_place]
 
-        for i in range(len(surplus_workers)):
-            if surplus_workers[i] < 0:
-                done = False
-                idle_workers = self.get_idle_workers()
-                #check if the place has vespene gas
-                if mining_place[i].vespene_contents > 0:
-                    if idle_workers:
-                        idle_workers[0].gather(mining_place[i])
-                        done = True
-                else:
-                    #get the close mineral patch
-                    local_minerals = [
-                        mineral
-                        for mineral in self.mineral_field if mineral.distance_to(mining_place[i]) <= 8
-                    ]
-                    if local_minerals:
+            for i in range(len(surplus_workers)):
+                if surplus_workers[i] < 0:
+                    done = False
+                    idle_workers = self.get_idle_workers()
+                    #check if the place has vespene gas
+                    if mining_place[i].vespene_contents > 0:
                         if idle_workers:
-                            idle_workers[0].gather(local_minerals[0])
+                            idle_workers[0].gather(mining_place[i])
                             done = True
+                    else:
+                        #get the close mineral patch
+                        local_minerals = [
+                            mineral
+                            for mineral in self.mineral_field if mineral.distance_to(mining_place[i]) <= 8
+                        ]
+                        if local_minerals:
+                            if idle_workers:
+                                idle_workers[0].gather(local_minerals[0])
+                                done = True
 
-                if not done:
-                    #get the closest townhall to the place
-                    townhall = self.townhalls.closest_to(mining_place[i])
-                    if (self.build_workers):
-                        self.produce_workers(townhall)
+                    if not done:
+                        #get the closest townhall to the place
+                        townhall = self.townhalls.closest_to(mining_place[i])
+                        if (self.build_workers):
+                            self.produce_workers(townhall)
+        except Exception as e:
+            print(e)
     
     def update_race(self, race:Race):
         controller : RandomController = self.controller
@@ -224,7 +250,7 @@ def main():
         maps.get(map),
         [
             Bot(Race.Terran, RampWallBot()), 
-            Computer(Race.Terran, difficulty=Difficulty.Hard)
+            Computer(Race.Protoss, difficulty=Difficulty.Hard)
         ],
         realtime=False,
         save_replay_as="replay"

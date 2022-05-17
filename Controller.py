@@ -396,7 +396,7 @@ class TVTController(Controller):
             self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
         
-        if self.bot.supply_army>50 and self.army_commanders[0].mode!="attack":
+        if self.bot.supply_army>90 and self.army_commanders[0].mode!="attack":
             self.army_commanders[0].mode = "attack"
 
 
