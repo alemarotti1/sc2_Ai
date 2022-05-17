@@ -80,7 +80,7 @@ class Controller(metaclass=abc.ABCMeta):
         for townhall in self.bot.townhalls(UnitTypeId.ORBITALCOMMAND):
             townhalls = self.bot.townhalls
             th = sorted(townhalls, key=lambda x: x.assigned_harvesters)[0]
-            if townhall.energy > 50:
+            if townhall.energy >= 100:
                 townhall(AbilityId.CALLDOWNMULE_CALLDOWNMULE, self.bot.mineral_field.closest_to(th))
         # if self.bot.build_workers:
         #     self.bot.worker_sauration()

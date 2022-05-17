@@ -37,7 +37,6 @@ class BuildingCommander:
         self.step = 0
         self.enemy_race : Race = enemy_race
         self.expanded_times = 1
-        self.expand_locations = []
 
         self.action["opening"] = self.opening
         self.action["midgame"] = self.midgame
@@ -52,7 +51,6 @@ class BuildingCommander:
         if self.step == 0:
             #get the main base
             bases = self.ramp_wall_bot.townhalls
-            self.expand_locations = [self.ramp_wall_bot.townhalls.first.position]
             if bases:
                 base = bases.first
                 self.step += 1
@@ -159,19 +157,19 @@ class BuildingCommander:
             return
         
     async def midgame(self):
-        if self.enemy_race is Race.Terran:
-            await self.midgame_terran()
-        elif self.enemy_race is Race.Protoss:
-            await self.midgame_protoss()
-        elif self.enemy_race is Race.Zerg:
-            await self.midgame_zerg()
-        else:
-            raise Exception("error at identifying enemy race")
-         
-    
-
-
-    async def midgame_terran(self):
+        
+        if (self.ramp_wall_bot.supply_left < 20 and self.ramp_wall_bot.townhalls and self.ramp_wall_bot.supply_used >= 20
+            and self.ramp_wall_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and self.ramp_wall_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
+        ):
+            workers: Units = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
+            # If workers were found
+            if workers:
+                worker: Unit = workers.furthest_to(workers.center)
+                location: Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.SUPPLYDEPOT, worker.position, placement_step=3)
+                # If a placement location was found
+                if location:
+                    # Order worker to build exactly on that location
+                    worker.build(UnitTypeId.SUPPLYDEPOT, location)
 
         if self.step == 0:
             if self.ramp_wall_bot.can_afford(UnitTypeId.COMMANDCENTER):
@@ -179,8 +177,13 @@ class BuildingCommander:
                 sorted_expansion_points = sorted(expansion_points, key=lambda p: p.distance_to(self.ramp_wall_bot.townhalls.first))
                 closest_expansion_point = sorted_expansion_points[self.expanded_times]
 
+                for oc in self.ramp_wall_bot.townhalls(UnitTypeId.ORBITALCOMMAND):
+                    if oc.energy >= 50:
+                        oc(AbilityId.SCANNERSWEEP_SCAN, closest_expansion_point)
+                        break
+
+
                 self.builder.build(UnitTypeId.COMMANDCENTER, closest_expansion_point, queue=True)
-                self.expand_locations.append(closest_expansion_point)
                 self.expanded_times += 1
                 self.step += 1
 
@@ -236,7 +239,7 @@ class BuildingCommander:
             if len(self.ramp_wall_bot.structures(UnitTypeId.BARRACKS)) == 1:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.BARRACKS):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.expand_locations[0], 20, placement_step=3)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls.first.position, 20, placement_step=3)
                     if position:
                         workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
                         worker = workers.closest_to(position)
@@ -290,7 +293,7 @@ class BuildingCommander:
 
             mineralFields = 0
             expansion_points : List[Point2] = self.ramp_wall_bot.expansion_locations_list
-            sorted_expansion_points = sorted(expansion_points, key=lambda p: p.distance_to(self.expand_locations[0]))
+            sorted_expansion_points = sorted(expansion_points, key=lambda p: p.distance_to(self.ramp_wall_bot.townhalls.first.position))
             for position in sorted_expansion_points[:self.expanded_times]:
                 mineralFields += len(self.ramp_wall_bot.mineral_field.closer_than(10, position))
 
@@ -299,11 +302,15 @@ class BuildingCommander:
                     closest_expansion_point = sorted_expansion_points[self.expanded_times]
                     builders = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_minerals and not unit.is_constructing_scv)
 
+                    for oc in self.ramp_wall_bot.townhalls(UnitTypeId.ORBITALCOMMAND):
+                        if oc.energy >= 50:
+                            oc(AbilityId.SCANNERSWEEP_SCAN, closest_expansion_point)
+                            break
+
                     self.builder = builders.closest_to(closest_expansion_point)
 
                     if self.builder and self.ramp_wall_bot.enemy_units.closer_than(10, closest_expansion_point).amount == 0:
                         self.builder.build(UnitTypeId.COMMANDCENTER, closest_expansion_point)
-                        self.expand_locations.append(closest_expansion_point)
                         self.expanded_times += 1
 
                         if self.step == 3:
@@ -319,11 +326,18 @@ class BuildingCommander:
                         worker = workers.closest_to(position)
                         if worker:
                             worker.build(UnitTypeId.GHOSTACADEMY, position)
+
+            if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle) > 0:
+                if self.ramp_wall_bot.minerals > 100 and self.ramp_wall_bot.vespene > 100:
+                    self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle.first(AbilityId.RESEARCH_DRILLINGCLAWS)
             
+            if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle) > 0:
+                if self.ramp_wall_bot.minerals > 100 and self.ramp_wall_bot.vespene > 100:
+                    self.ramp_wall_bot.structures(UnitTypeId.FACTORYTECHLAB).idle.first(AbilityId.RESEARCH_SMARTSERVOS)
 
             if self.enemy_race == Race.Protoss and self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount > 0:
                 if self.ramp_wall_bot.minerals > 300 and self.ramp_wall_bot.vespene > 300:
-                    self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount(AbilityId.GHOSTACADEMYRESEARCH_RESEARCHENHANCEDSHOCKWAVES)
+                    self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).first(AbilityId.GHOSTACADEMYRESEARCH_RESEARCHENHANCEDSHOCKWAVES)
 
             if self.step == 4 and self.ramp_wall_bot.structures(UnitTypeId.GHOSTACADEMY).amount != 0:
                 self.step += 1
@@ -378,7 +392,7 @@ class BuildingCommander:
                         if self.ramp_wall_bot.minerals > 300 and self.ramp_wall_bot.vespene > 300:
                             avaliable: List[AbilityId] = await self.ramp_wall_bot.get_available_abilities(self.ramp_wall_bot.structures(building).first)
                             if ability in avaliable:
-                                self.ramp_wall_bot.structures(building).first(ability)
+                                self.ramp_wall_bot.structures(building).idle.first(ability)
                                 break
 
             if self.ramp_wall_bot.structures(UnitTypeId.ENGINEERINGBAY).amount > 0 and \
@@ -464,29 +478,6 @@ class BuildingCommander:
                             #build a refinery
                             if worker:
                                 worker.build(UnitTypeId.REFINERY, target_gas, queue=True)
-        
-
-        if (self.ramp_wall_bot.supply_left < 20 and self.ramp_wall_bot.townhalls and self.ramp_wall_bot.supply_used >= 20
-            and self.ramp_wall_bot.can_afford(UnitTypeId.SUPPLYDEPOT) and self.ramp_wall_bot.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
-        ):
-            workers: Units = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
-            # If workers were found
-            if workers:
-                worker: Unit = workers.furthest_to(workers.center)
-                location: Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.SUPPLYDEPOT, worker.position, placement_step=3)
-                # If a placement location was found
-                if location:
-                    # Order worker to build exactly on that location
-                    worker.build(UnitTypeId.SUPPLYDEPOT, location)
-        
-
-
-
-    midgame_protoss = midgame_terran
-    
-    midgame_zerg = midgame_protoss 
-
-
 
 
     def scout_pos(self):
