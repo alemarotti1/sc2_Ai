@@ -408,7 +408,7 @@ class BuildingCommander:
             if len(self.ramp_wall_bot.structures(UnitTypeId.BARRACKS)) < 4:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.BARRACKS):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls[2].position, 30, placement_step=3)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position, 30, placement_step=2, addon_place=True)
                     if position:
                         workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
                         worker = workers.closest_to(position)
@@ -418,7 +418,7 @@ class BuildingCommander:
             if len(self.ramp_wall_bot.structures(UnitTypeId.FACTORY)) < 4:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.FACTORY):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls[2].position, 30, placement_step=3)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position, 30, placement_step=2, addon_place=True)
                     if position:
                         workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
                         worker = workers.closest_to(position)
@@ -428,7 +428,7 @@ class BuildingCommander:
             if len(self.ramp_wall_bot.structures(UnitTypeId.STARPORT)) < 4:
                 end = False
                 if self.ramp_wall_bot.can_afford(UnitTypeId.STARPORT):
-                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls[2].position, 30, placement_step=3)
+                    position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.COMMANDCENTER, self.ramp_wall_bot.townhalls.closest_to(self.ramp_wall_bot.enemy_start_locations[0]).position, 30, placement_step=2, addon_place=True)
                     if position:
                         workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
                         worker = workers.closest_to(position)
@@ -438,7 +438,7 @@ class BuildingCommander:
             for cc in self.ramp_wall_bot.townhalls:
                 if self.ramp_wall_bot.structures(UnitTypeId.MISSILETURRET).closer_than(25, cc).amount < 2:
                     if self.ramp_wall_bot.can_afford(UnitTypeId.MISSILETURRET):
-                        position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.MISSILETURRET, cc.position, 20, placement_step=3)
+                        position : Point2 = await self.ramp_wall_bot.find_placement(UnitTypeId.MISSILETURRET, cc.position, 20, placement_step=2)
                         if position:
                             workers = self.ramp_wall_bot.workers.filter(lambda unit: not unit.is_carrying_resource and not unit.is_constructing_scv)
                             worker = workers.closest_to(position)

@@ -59,6 +59,8 @@ class ArmyCommander:
         self.mode = mode
         self.targets = None
         self.phase = None
+
+        self.move_step = self.ramp_wall_bot.start_location.distance_to(self.ramp_wall_bot.enemy_start_locations[0])/30
         
     async def update_army(self):
         # self.assigned_army = Units([], self.ramp_wall_bot)
@@ -83,7 +85,6 @@ class ArmyCommander:
         for unit_necessity in self.unity_necessities:
             if UnitTypeId[unit_necessity["unit"]] == UnitTypeId.WIDOWMINE:
                 unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId.WIDOWMINE).amount + self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED).amount
-                print(unit_necessity["acquired"])
 
             if UnitTypeId[unit_necessity["unit"]] == UnitTypeId.SIEGETANK:
                 unit_necessity["acquired"] = self.assigned_army.of_type(UnitTypeId.SIEGETANK).amount + self.assigned_army.of_type(UnitTypeId.SIEGETANKSIEGED).amount
@@ -132,7 +133,7 @@ class ArmyCommander:
                 unit.attack(destination, queue=True)
                 not_grouped += 1
         
-        return not_grouped< units.amount/10
+        return not_grouped< units.amount/20
 
     
     async def attack(self):
@@ -142,9 +143,16 @@ class ArmyCommander:
         if self.assigned_army.amount == 0:
             return
         center = self.mean_point(self.assigned_army)
-        if self.ramp_wall_bot.enemy_units.closer_than(20, center).amount > 3:
+
+        close_units = self.ramp_wall_bot.enemy_units.closer_than(20, center)
+        if close_units.amount > 3:
             for tank in self.assigned_army.of_type(UnitTypeId.SIEGETANK):
                 tank(AbilityId.SIEGEMODE_SIEGEMODE)
+            for liberator in self.assigned_army.of_type(UnitTypeId.LIBERATOR):
+                liberator(AbilityId.MORPH_LIBERATORAGMODE)
+
+
+        if close_units.closer_than(5, center).amount > 3:
             for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINE):
                 wm(AbilityId.BURROWDOWN_WIDOWMINE)
         else:
@@ -152,7 +160,39 @@ class ArmyCommander:
                 tank(AbilityId.UNSIEGE_UNSIEGE)
             for wm in self.assigned_army.of_type(UnitTypeId.WIDOWMINEBURROWED):
                 wm(AbilityId.BURROWUP_WIDOWMINE)
-            
+            for liberator in self.assigned_army.of_type(UnitTypeId.LIBERATORAG):
+                liberator(AbilityId.MORPH_LIBERATORAAMODE)
+        
+        if close_units.amount > 0:
+            vikings = self.assigned_army.of_type(set([UnitTypeId.VIKINGFIGHTER, UnitTypeId.VIKINGASSAULT]))
+            flying = self.ramp_wall_bot.enemy_units.closer_than(30, self.mean_point(vikings)).filter(lambda x: x.is_flying)
+            if flying.amount > 0:
+                vikings_landed = vikings.of_type(UnitTypeId.VIKINGASSAULT)
+                for viking in vikings_landed:
+                    viking(AbilityId.MORPH_VIKINGFIGHTERMODE)
+            else:
+                vikings_air = vikings.of_type(UnitTypeId.VIKINGFIGHTER)
+                for viking in vikings_air:
+                    viking(AbilityId.MORPH_VIKINGASSAULTMODE)
+                
+        
+        for ghost in self.assigned_army.of_type(UnitTypeId.GHOST):
+            targets = self.ramp_wall_bot.enemy_units.closer_than(12, ghost.position).filter(lambda u: u.shield + u.energy_max > 100).sort(key=lambda u: u.shield + u.energy_max, reverse=True)
+            if not targets:
+                continue
+            if targets.amount > 0 and ghost.energy > 75:
+                ghost(AbilityId.EMP_EMP, center)
+            elif ghost.energy > 50:
+                targets = self.ramp_wall_bot.enemy_units.filter(lambda u: u.is_biological).sort(key=lambda u: u.health_max, reverse=True)
+                if not targets:
+                    continue
+                if targets.amount > 0:
+                    # ghost(AbilityId., targets[0])
+                    print(await self.ramp_wall_bot.get_available_abilities(ghost))
+        for marine in self.assigned_army.of_type(UnitTypeId.MARINE):
+            if marine.health_percentage > 0.5 and self.ramp_wall_bot.enemy_units.closer_than(marine.ground_range+1, marine.position).amount > 3:
+                marine(AbilityId.EFFECT_STIM_MARINE)
+        
 
 
         pos = Units([], self.ramp_wall_bot)
@@ -170,19 +210,22 @@ class ArmyCommander:
                     unit.attack(pos[0])
 
         else:
-            if self.phase == "-1" or self.phase == len(self.targets):
+            if self.phase == "-1":
                 if self.group(self.assigned_army, self.ramp_wall_bot.enemy_start_locations[0].towards(self.ramp_wall_bot.start_location, 50)):
-                    self.phase = "0"
+                    self.phase = "1"
+            elif self.phase == "0":
+                if self.group(self.assigned_army, self.targets[int(self.phase)]):
+                    self.phase = str(len(self.targets))
             else:
                 if self.group(self.assigned_army, self.targets[int(self.phase)]):
-                    self.phase = str(int(self.phase) + 1)
-
+                    self.phase = str(int(self.phase) - 1)
         
+
         u = self.assigned_army.furthest_to(point)
         if u.distance_to(point) > 10:
             u.move(point.position)
         
-
+        print(self.phase)
 
     async def defend(self):
         threats = self.ramp_wall_bot.enemy_units
@@ -293,7 +336,14 @@ class ArmyCommander:
         elif self.mode == "harass":
             await self.harass()
 
-
+    async def attack_location(self, location:Point2, mean_point:Point2):
+        for unit in self.assigned_army:
+            if not unit:
+                continue
+            if mean_point.distance_to(location) < self.move_step:
+                unit.attack(location)
+            else:
+                unit.attack(mean_point.towards(location, self.move_step))
 
 
 

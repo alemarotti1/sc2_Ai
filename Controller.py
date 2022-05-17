@@ -231,16 +231,29 @@ class Controller(metaclass=abc.ABCMeta):
                     await self.produce_unit(u)
 
     async def produce_unit(self, unity):
-        for structure in self.bot.structures(unity["source"]).idle:
-            abilities = await self.bot.get_available_abilities(structure)
-            for ability in abilities:
-                if unity["unit"] not in str(ability):
-                    continue
-                if self.bot.can_afford(UnitTypeId[unity["unit"]]):
-                    structure(ability)
-
-                    if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+        if UnitTypeId[unity["unit"]] == UnitTypeId.WIDOWMINE:
+            for structure in self.bot.structures(unity["source"]).filter(lambda s: (s.is_idle or (s.has_reactor and len(s.orders)<2)) and not s.has_techlab):
+                abilities = await self.bot.get_available_abilities(structure)
+                for ability in abilities:
+                    if unity["unit"] not in str(ability):
+                        continue
+                    if self.bot.can_afford(UnitTypeId[unity["unit"]]):
                         structure(ability)
+
+                        if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                            structure(ability)
+        else:
+            
+            for structure in self.bot.structures(unity["source"]).filter(lambda s: s.is_idle or (s.has_reactor and len(s.orders)<2)):
+                abilities = await self.bot.get_available_abilities(structure)
+                for ability in abilities:
+                    if unity["unit"] not in str(ability):
+                        continue
+                    if self.bot.can_afford(UnitTypeId[unity["unit"]]):
+                        structure(ability)
+
+                        if structure.has_reactor and self.bot.can_afford(UnitTypeId[unity["unit"]]) and unity["acquired"]+1<unity["amount"] :
+                            structure(ability)
     
     async def refresh_army(self):
         self.army = self.bot.units.filter(lambda unit: unit.type_id in [UnitTypeId.MARINE, UnitTypeId.REAPER, UnitTypeId.MARAUDER, UnitTypeId.GHOST, UnitTypeId.HELLION, UnitTypeId.SIEGETANK, UnitTypeId.SIEGETANKSIEGED, UnitTypeId.THOR, UnitTypeId.CYCLONE, UnitTypeId.WIDOWMINE, UnitTypeId.WIDOWMINEBURROWED, UnitTypeId.VIKINGFIGHTER, UnitTypeId.VIKINGASSAULT , UnitTypeId.MEDIVAC, UnitTypeId.RAVEN, UnitTypeId.BANSHEE, UnitTypeId.BATTLECRUISER, UnitTypeId.AUTOTURRET, UnitTypeId.LIBERATOR])
@@ -383,7 +396,7 @@ class TVTController(Controller):
             self.army_commanders.append(ArmyCommander(self.bot, "MainArmy", Race.Protoss, mode="defend"))
             self.midgame_comanders_created = True
         
-        if self.bot.supply_army>90 and self.army_commanders[0].mode!="attack":
+        if self.bot.supply_army>50 and self.army_commanders[0].mode!="attack":
             self.army_commanders[0].mode = "attack"
 
 
