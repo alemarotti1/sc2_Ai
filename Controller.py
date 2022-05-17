@@ -78,7 +78,7 @@ class Controller(metaclass=abc.ABCMeta):
     async def assign_workers(self):
         await self.bot.distribute_workers(1)
         for townhall in self.bot.townhalls(UnitTypeId.ORBITALCOMMAND):
-            townhalls = self.bot.townhalls
+            townhalls = self.bot.townhalls.ready
             th = sorted(townhalls, key=lambda x: x.assigned_harvesters)[0]
             if townhall.energy >= 100:
                 townhall(AbilityId.CALLDOWNMULE_CALLDOWNMULE, self.bot.mineral_field.closest_to(th))
